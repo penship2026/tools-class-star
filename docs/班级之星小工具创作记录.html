@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>班级之星 A4 双人打印小工具 · 创作记录</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23c8202a' d='M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ink:#1f2329; --muted:#646a73; --line:#e5e7eb; --bg:#f3f4f6;
+  --brand:#c8202a; --brand-soft:#fdecee; --card:#fff; --ok:#177245;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Microsoft YaHei","PingFang SC",-apple-system,"Source Han Sans SC",sans-serif;
+  color:var(--ink);background:var(--bg);line-height:1.75;font-size:15px;
+}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+
+/* ===== Hero ===== */
+.hero{padding:48px 0 28px;border-bottom:1px solid var(--line)}
+.hero .kicker{font-size:13px;letter-spacing:.18em;color:var(--brand);font-weight:700;margin-bottom:12px}
+.hero h1{font-size:30px;line-height:1.35;font-weight:800;letter-spacing:.01em}
+.hero p.lead{margin-top:14px;color:var(--muted);font-size:16px;max-width:640px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.tag{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;color:var(--muted)}
+
+/* ===== 章节 ===== */
+section{margin-top:40px}
+h2{font-size:20px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:18px}
+h2::before{content:"";width:10px;height:20px;border-radius:3px;background:var(--brand);display:inline-block}
+h3{font-size:15px;font-weight:700;margin:16px 0 8px}
+p{margin:8px 0}
+.muted{color:var(--muted)}
+code{font-family:"SFMono-Regular",Consolas,monospace;background:#f1f2f4;border-radius:5px;padding:1px 6px;font-size:13px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+.mini{border:1px solid var(--line);border-radius:12px;padding:16px}
+.mini h3{margin-top:0}
+
+/* 痛点列表 */
+.pain li{margin:8px 0 8px 20px}
+
+/* 时间线 */
+.timeline{position:relative;margin-left:8px;padding-left:26px;border-left:2px solid var(--line)}
+.tl-item{position:relative;padding:0 0 26px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";position:absolute;left:-33px;top:6px;width:12px;height:12px;border-radius:50%;
+  background:#fff;border:3px solid var(--brand);
+}
+.tl-item .ver{font-weight:800;color:var(--brand);font-size:14px}
+.tl-item .title{font-weight:700;margin:2px 0 6px}
+.tl-item ul{margin:6px 0 0 18px}
+.tl-item li{margin:5px 0;color:var(--ink)}
+
+/* 踩坑 */
+.issue{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;background:#fff}
+.issue .bad{color:#d83931;font-weight:700}
+.issue .good{color:var(--ok);font-weight:700;margin-top:6px;display:block}
+
+/* 引用文案 */
+.quote{background:var(--brand-soft);border-left:4px solid var(--brand);border-radius:0 12px 12px 0;padding:18px 20px;color:#5b1a1f}
+.quote p{margin:6px 0}
+
+/* 贴士 */
+.tips li{margin:9px 0 9px 20px}
+
+/* 表格感功能清单 */
+.func-group{margin-bottom:16px}
+.func-group .gname{font-weight:700;margin-bottom:10px;color:var(--ink)}
+.func-list{display:flex;flex-wrap:wrap;gap:8px}
+.func-list span{background:#f6f7f9;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:13.5px}
+
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== Hero ===== -->
+  <header class="hero">
+    <div class="kicker">创作记录 · 本地工具 · 离线可用</div>
+    <h1>班级之星 A4 双人打印小工具</h1>
+    <p class="lead">面向班级每月评优公示场景的单文件网页工具：浏览器直接打开，A4 横向每页固定展示 2 人，人物绝不跨页，所见即所得。</p>
+    <div class="tags">
+      <span class="tag">纯 HTML + 原生 JS</span>
+      <span class="tag">零后端 · 零数据库</span>
+      <span class="tag">localStorage 本地存储</span>
+      <span class="tag">A4 横向打印</span>
+      <span class="tag">每人独立字号</span>
+    </div>
+  </header>
+
+  <!-- ===== 背景 ===== -->
+  <section>
+    <h2>项目背景与痛点</h2>
+    <div class="card">
+      <p>学校班级每月评选班级之星、习惯之星、进步之星，需要打印公示。沿用传统 Word 模板时存在几个反复出现的问题：</p>
+      <ul class="pain">
+        <li>每次手动排版，重复调整格式；</li>
+        <li>多人内容容易跨页、串栏，人物信息被拆分到不同页面；</li>
+        <li>屏幕预览和实际打印效果不一致，彩色标题容易被打印机转成灰色；</li>
+        <li>多人录入后分页不可控，排版随时可能崩坏。</li>
+      </ul>
+      <p class="muted">目标：做一个本地单 HTML 文件小工具，不用服务器、不用安装软件，浏览器直接打开；A4 横向打印，每页固定 2 位学生，人物不跨页，填写后实时预览。</p>
+    </div>
+  </section>
+
+  <!-- ===== 参考模板 ===== -->
+  <section>
+    <h2>原始参考模板</h2>
+    <div class="card">
+      <p>参考 Word 文档《初一7班10月班级之星2-模板.docx》，其版式特征如下：</p>
+      <ul class="pain">
+        <li>A4 横向纸张，一页 2 人，分两栏展示；</li>
+        <li>顶部标题：班级 + 荣誉称号，黑体红色、黄色描边、居中；</li>
+        <li>姓名 + 职务同一行，整体右对齐，格式为 <code>姓名（职务、职务）</code>；</li>
+        <li>照片固定尺寸占位；</li>
+        <li>简介正文宋体、首行缩进 2 字符，纯黑色文字；</li>
+        <li>Word 原生分栏的缺陷：简介过长会自动串到下一栏，人物信息被拆分跨页。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===== 需求迭代 ===== -->
+  <section>
+    <h2>需求迭代全过程</h2>
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="ver">V1 · 初始需求</div>
+        <div class="title">基础填写、预览、打印与自动分页</div>
+        <ul>
+          <li>A4 纸张，一张打印 2 人；字段含称号、姓名、职务、简介；</li>
+          <li>表单填写、实时预览、浏览器打印预览与直接打印；</li>
+          <li>支持多人录入，超过 2 人自动分页；强制单人信息不跨页拆分。</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="ver">V2 · 版式与排版规则</div>
+        <div class="title">对齐模板样式，锁定标题与姓名行</div>
+        <ul>
+          <li>标题、姓名职务样式锁定，不参与简介自适应缩放；</li>
+          <li>只有内容超出卡片才缩小简介字号；放得下就保持原始字号；照片尺寸固定，不压缩；</li>
+          <li>添加人物时自动填充默认范文模板，直接修改即可；</li>
+          <li>姓名职务行改为整体右对齐，还原模板布局。</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="ver">V3 · 字号策略调整</div>
+        <div class="title">每人独立字号，默认跟随全局基准</div>
+        <ul>
+          <li>删除全局统一缩放逻辑；</li>
+          <li>全局只保留简介基准字号，仅对新增人物生效；</li>
+          <li>每位人物可独立设置简介字号，默认跟随全局；单人简介溢出时，仅对该人物向下逐级缩字号，最小 9pt；溢出严重在编辑面板标红警告，提示精简文字，不截断、不跨页。</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="ver">V4 · UI 布局优化</div>
+        <div class="title">PC 左右分栏，独立滚动，可拖拽调宽</div>
+        <ul>
+          <li>PC 端左侧编辑设置区、右侧 A4 预览区；左右面板独立滚动、互不干扰；支持拖拽调节左侧面板宽度，宽度本地记忆；</li>
+          <li>移动端自动降级为上下堆叠，小屏适配，标签不折行挤压；</li>
+          <li>恢复卡片式 UI，分组清晰。</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="ver">V5 · 文件与图片能力</div>
+        <div class="title">本地图片上传、历史版本与数据备份</div>
+        <ul>
+          <li>本地选择图片上传，支持照片预览，无需手动粘贴 base64；</li>
+          <li>本地历史版本：保存多套历史方案、添加备注，支持载入与删除，最多 20 份；</li>
+          <li>JSON 导入导出，用于备份与跨设备迁移；移除废弃的批量粘贴导入功能；</li>
+          <li>浏览器 localStorage 自动保存当前草稿，刷新不丢失。</li>
+        </ul>
+      </div>
+
+      <div class="tl-item">
+        <div class="ver">V6 · 全局字号与颜色校正</div>
+        <div class="title">标题 / 姓名字号可配，简介颜色回归黑色</div>
+        <ul>
+          <li>全局标题字号：只改大小，保留红色 + 黄描边、居中、加粗的模板样式；</li>
+          <li>全局姓名 &amp; 职务字号，保持右对齐，全局统一，不随简介内容自适应；</li>
+          <li>纠正颜色误判：原 Word 模板简介实测为纯黑单色文字，无渐变；提供黑色、深灰、红色、深蓝、自定义取色。</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== 功能清单 ===== -->
+  <section>
+    <h2>成品功能清单</h2>
+    <div class="grid">
+      <div class="mini">
+        <div class="gname">全局设置</div>
+        <div class="func-list">
+          <span>班级 / 单位名称</span><span>荣誉称号</span><span>期次月份</span>
+          <span>标题字号</span><span>姓名职务字号</span><span>简介基准字号</span>
+        </div>
+      </div>
+      <div class="mini">
+        <div class="gname">人物编辑</div>
+        <div class="func-list">
+          <span>姓名 / 职务</span><span>单人简介字号</span><span>本地照片上传</span>
+          <span>多行分段简介</span><span>新建范文模板</span><span>溢出红色警告</span>
+        </div>
+      </div>
+      <div class="mini">
+        <div class="gname">本地历史版本</div>
+        <div class="func-list">
+          <span>保存整套数据</span><span>版本备注</span><span>载入历史</span>
+          <span>删除历史</span><span>最多 20 条</span><span>旧记录自动淘汰</span>
+        </div>
+      </div>
+      <div class="mini">
+        <div class="gname">预览与打印</div>
+        <div class="func-list">
+          <span>实时 A4 仿真预览</span><span>每页固定 2 人</span><span>自动分页</span>
+          <span>一键打印 / 导出 PDF</span><span>JSON 导入导出</span><span>草稿自动保存</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 技术选型 ===== -->
+  <section>
+    <h2>技术选型</h2>
+    <div class="card">
+      <ul class="pain">
+        <li>纯前端单 HTML 文件：HTML + CSS + 原生 JavaScript，无框架、无构建；</li>
+        <li>无后端、无数据库，全部状态在浏览器内维护；</li>
+        <li>存储：localStorage（当前草稿 + 多份历史版本）；</li>
+        <li>打印：CSS <code>@page</code> 控制 A4 横向，媒体查询区分屏幕预览与打印样式；</li>
+        <li>图片：本地选择后在浏览器内压缩为 base64 存储。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===== 踩坑复盘 ===== -->
+  <section>
+    <h2>踩坑复盘（技术向）</h2>
+
+    <div class="issue">
+      <span class="bad">❌ 坑 1：CSS 多栏流式布局，文字会自由流动，人物信息被拆分到两页。</span>
+      <span class="good">✅ 解决：放弃流式分栏，改用固定卡片数组分页；每两个人封装成一个 A4 页面容器，强制卡片不可分割。</span>
+    </div>
+
+    <div class="issue">
+      <span class="bad">❌ 坑 2：打印预览和屏幕预览样式不一致，红色标题描边打印变灰。</span>
+      <span class="good">✅ 解决：加入 <code>-webkit-print-color-adjust: exact</code>，强制保留打印色彩。</span>
+    </div>
+
+    <div class="issue">
+      <span class="bad">❌ 坑 3：自适应缩放若全局统一进行，会把标题、姓名职务一起缩小，破坏模板样式。</span>
+      <span class="good">✅ 解决：元素隔离——仅简介文本做溢出自动缩减，标题、姓名职务、照片尺寸完全锁死。</span>
+    </div>
+
+    <div class="issue">
+      <span class="bad">❌ 坑 4：多人独立字号时，不能改写已有人员；全局基准字号只对新增人员生效。</span>
+      <span class="good">✅ 解决：人物对象存储独立字号字段，<code>null</code> 代表跟随全局；修改全局配置不会覆盖已手动设置字号的人。</span>
+    </div>
+
+    <div class="issue">
+      <span class="bad">❌ 坑 5：Word XML 里存在渐变属性，但实际渲染出的 PDF 文字是黑色。</span>
+      <span class="good">✅ 解决：不能只看 XML 标签判定样式，必须以实际渲染输出效果为准。</span>
+    </div>
+
+    <div class="issue">
+      <span class="bad">❌ 坑 6：左右分栏时页面整体滚动，编辑区滚动带动预览区滚动，体验割裂。</span>
+      <span class="good">✅ 解决：PC 模式两个容器独立滚动；窄屏设备降级为普通文档滚动。</span>
+    </div>
+  </section>
+
+  <!-- ===== 宣传文案 ===== -->
+  <section>
+    <h2>可直接复用的宣传文案</h2>
+    <div class="quote">
+      <p><strong>班级之星打印小工具 ✨ 告别 Word 反复调格式</strong></p>
+      <p>每月评班级之星，还在 Word 里调排版？单 HTML 本地工具，不用装软件，浏览器直接打开！</p>
+      <p>✅ A4 横向，每页打印 2 人，人物绝不跨页乱版<br>
+      ✅ 标题 / 姓名职务样式锁定，还原 Word 模板<br>
+      ✅ 每个人物简介字号可单独设置，溢出自动适配<br>
+      ✅ 图片直接本地上传，实时预览<br>
+      ✅ 支持保存多套历史方案，自动存草稿<br>
+      ✅ 一键打印 / 导出 PDF</p>
+      <p>老师班主任办公神器，离线本地运行，数据全部保存在浏览器本地，不上传网络。</p>
+    </div>
+  </section>
+
+  <!-- ===== 使用贴士 ===== -->
+  <section>
+    <h2>使用小贴士</h2>
+    <div class="card">
+      <ul class="tips">
+        <li>将工具文件保存为 <code>班级之星打印工具.html</code>，双击用 Edge / Chrome 浏览器打开；</li>
+        <li>简介建议控制在 380 字以内效果最佳；文字过多时工具会标红提示精简；</li>
+        <li>打印设置：纸张 A4 横向，关闭“适应边框打印”，缩放保持 100%；</li>
+        <li>重要资料建议导出 JSON 备份，防止浏览器清理本地存储后丢失数据。</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>班级之星 A4 双人打印小工具 · 创作记录 · 本地离线运行，数据不出本机</footer>
+</div>
+</body>
+</html>

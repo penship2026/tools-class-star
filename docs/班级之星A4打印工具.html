@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>班级之星 A4 打印工具</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FF0000' d='M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z'/%3E%3C/svg%3E">
+<style>
+:root{
+  --paper-w: 297mm;
+  --paper-h: 210mm;
+  --pad: 12.7mm;
+  --gap: 14.8mm;
+  --ink:#1f2329;
+  --muted:#646a73;
+  --line:#d9dce1;
+  --brand:#c8202a;
+  --bg:#eceef1;
+  --card:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"Microsoft YaHei","PingFang SC",-apple-system,sans-serif;
+  color:var(--ink);background:var(--bg);font-size:14px;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink)}
+
+/* ===== 顶部工具栏 ===== */
+.toolbar{
+  position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;
+}
+.toolbar h1{font-size:16px;font-weight:700;margin-right:8px}
+.toolbar .spacer{flex:1}
+.btn{
+  border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;
+  font-size:14px;color:var(--ink);transition:border-color .15s,background .15s;
+}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:#a81821}
+.btn.danger:hover{border-color:#d83931;color:#d83931}
+.toolbar select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.toolbar .hint{color:var(--muted);font-size:12px}
+
+/* ===== 主布局：左右独立滚动，左栏可拖拽调宽 ===== */
+.toolbar{flex:0 0 auto}
+.layout{display:flex;align-items:stretch;gap:0;flex:1 1 auto;min-height:0;overflow:hidden}
+.editor{
+  width:400px;flex:0 0 auto;height:100%;overflow-y:auto;overscroll-behavior:contain;
+}
+.resizer{
+  width:8px;flex:0 0 auto;cursor:col-resize;position:relative;z-index:20;
+  display:flex;align-items:stretch;justify-content:center;
+}
+.resizer::before{content:"";width:2px;background:var(--line);transition:background .15s}
+.resizer:hover::before,.resizer.active::before{background:var(--brand)}
+.preview{flex:1 1 auto;min-width:0;height:100%;overflow:auto;overscroll-behavior:contain}
+@media (max-width: 900px){
+  body{display:block;height:auto;overflow:auto}
+  .layout{flex-direction:column;height:auto;overflow:visible}
+  .resizer{display:none}
+  .editor{width:100% !important;height:auto;overflow:visible}
+  .preview{height:auto;overflow:visible}
+}
+body.resizing{user-select:none;cursor:col-resize}
+
+/* ===== 编辑面板 ===== */
+.editor{padding:16px 16px 40px;display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.panel h2{font-size:14px;font-weight:700;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;min-width:0}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12px;color:var(--muted);white-space:nowrap}
+.field-note{font-size:11px;color:var(--muted);line-height:1.4}
+.field input[type=text],.field textarea,.field select{
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;width:100%;min-width:0;
+}
+.field textarea{resize:vertical;line-height:1.5}
+.field-row{display:flex;gap:10px;flex-wrap:wrap}
+.field-row .field{flex:1 1 160px}
+.color-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.color-row select{flex:1 1 140px}
+.color-row input[type=color]{
+  width:44px;height:36px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff;flex:0 0 auto;
+}
+
+.person-item{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;background:#fff}
+.person-item .pi-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.person-item .pi-head .idx{font-size:12px;color:var(--muted);width:20px;flex:0 0 auto}
+.person-item .pi-head .pi-title{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pi-actions{display:flex;gap:6px;flex-wrap:wrap}
+.pi-actions button{
+  border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:12px;color:var(--muted);
+}
+.pi-actions button:hover{border-color:var(--brand);color:var(--brand)}
+.photo-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.photo-thumb{
+  width:72px;height:46px;border:1px dashed var(--line);border-radius:8px;object-fit:cover;background:#f4f5f7;flex:0 0 auto;
+}
+.photo-thumb.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px}
+.photo-ops{display:flex;flex-direction:column;gap:6px}
+.photo-ops button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:12px}
+.overflow-tag{color:#d83931;font-size:12px}
+
+/* 本地历史 */
+.history-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;margin-top:10px}
+.history-empty{font-size:12px;color:var(--muted);padding:6px 2px}
+.history-item{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+.history-item .hi-name{font-weight:700;font-size:13px;line-height:1.4;word-break:break-all}
+.history-item .hi-meta{font-size:11px;color:var(--muted);margin:3px 0 7px}
+.history-item .hi-actions{display:flex;gap:6px;flex-wrap:wrap}
+.history-item .hi-actions button{
+  border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 10px;font-size:12px;color:var(--muted);
+}
+.history-item .hi-actions button:hover{border-color:var(--brand);color:var(--brand)}
+.history-item .hi-actions button.del:hover{border-color:#d83931;color:#d83931}
+
+/* ===== 预览区 ===== */
+.preview{padding:24px 20px 60px;overflow:auto}
+.preview-inner{--scale:1;transform:scale(var(--scale));transform-origin:top center;display:flex;flex-direction:column;gap:20mm;align-items:center}
+.sheet{
+  width:var(--paper-w);height:var(--paper-h);background:#fff;position:relative;overflow:hidden;
+  padding:var(--pad);display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  box-shadow:0 6px 22px rgba(0,0,0,.18);break-after:page;break-inside:avoid;
+}
+.sheet:last-child{break-after:auto}
+.sheet-empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px}
+
+/* 人物卡（版面） */
+.person{display:flex;flex-direction:column;min-width:0;min-height:0;break-inside:avoid}
+/* 标题/姓名为模板固定样式（字重、颜色、描边不变），仅字号可由全局设置调整 */
+.p-title{
+  font-family:SimHei,"Heiti SC","Source Han Sans SC",sans-serif;font-weight:700;color:#FF0000;
+  line-height:1.18;text-align:center;letter-spacing:.03em;white-space:nowrap;overflow:hidden;
+  -webkit-text-stroke:.4pt #FFFF00;
+  text-shadow:0 1px 1px rgba(0,0,0,.15);
+}
+.p-name{
+  display:flex;justify-content:flex-end;align-items:baseline;gap:3mm;
+  font-family:SimSun,"Songti SC","Source Han Serif SC",serif;color:#000;
+  line-height:1.3;margin:3.5mm 0 3mm;
+}
+.p-name b{flex:0 1 auto;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-name .role{
+  flex:0 0 auto;font-weight:400;text-align:right;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.p-photo{width:118mm;height:75.7mm;margin:0 auto;border-radius:8px;overflow:hidden;flex-shrink:0}
+.p-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.p-photo .ph-empty{width:100%;display:flex;align-items:center;justify-content:center;color:#b6b9bf;background:#f2f3f5;font-size:12pt}
+.p-bio{flex:1;min-height:0;overflow:hidden;margin-top:3mm;text-align:justify}
+.p-bio p{text-indent:2em;margin:0 0 .35em}
+.person.overflow .p-bio{outline:1px dashed #d83931}
+.p-overflow-note{position:absolute;bottom:4mm;right:8mm;font-size:9pt;color:#d83931}
+
+/* ===== 窄屏（手机 / 小窗）适配 ===== */
+@media (max-width:640px){
+  .toolbar{padding:10px 12px;gap:8px}
+  .toolbar h1{width:100%;margin:0}
+  .toolbar .spacer{display:none}
+  .toolbar .hint{width:100%}
+  .btn{padding:8px 12px;flex:1 1 auto}
+  .editor{padding:12px 12px 32px;gap:12px}
+  .panel{padding:12px}
+  .field-row{flex-direction:column;gap:0}
+  .field-row .field{flex:1 1 auto}
+  input,textarea,select{font-size:16px}
+  .preview{padding:14px 10px 40px;overflow-x:hidden}
+  .photo-ops{flex-direction:row;flex-wrap:wrap}
+}
+
+/* ===== 打印样式 ===== */
+@page{size:A4 landscape;margin:0}
+@media print{
+  body{background:#fff;display:block;height:auto;overflow:visible}
+  .toolbar,.editor,.preview-controls{display:none !important}
+  .preview{padding:0;overflow:visible}
+  .preview-inner{--scale:1 !important;transform:none;gap:0;align-items:stretch;margin-bottom:0 !important}
+  .sheet{box-shadow:none;margin:0;width:297mm;height:210mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 工具栏 ===== -->
+<div class="toolbar">
+  <h1>班级之星 A4 打印工具</h1>
+  <button class="btn primary" id="btnPrint">打印 / 导出 PDF</button>
+  <button class="btn" id="btnExport">导出数据</button>
+  <button class="btn" id="btnImport">导入数据</button>
+  <button class="btn danger" id="btnClear">清空全部</button>
+  <span class="spacer"></span>
+  <label class="hint">预览缩放</label>
+  <select id="scaleSel">
+    <option value="fit">适宽</option>
+    <option value="1">100%</option>
+  </select>
+  <span class="hint" id="statHint"></span>
+</div>
+
+<div class="layout">
+  <!-- ===== 编辑面板 ===== -->
+  <aside class="editor">
+    <div class="panel">
+      <h2>全局设置</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>班级 / 单位</label>
+          <input type="text" id="cfgClass" placeholder="如：初一7班">
+        </div>
+        <div class="field">
+          <label>荣誉称号</label>
+          <input type="text" id="cfgTitle" placeholder="如：习惯之星">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>期次</label>
+          <input type="text" id="cfgPeriod" placeholder="如：10月（仅记录）">
+        </div>
+        <div class="field">
+          <label>简介默认字号</label>
+          <select id="cfgBioFont">
+            <option value="10.5">10.5 pt</option>
+            <option value="11">11 pt</option>
+            <option value="11.5">11.5 pt</option>
+            <option value="12">12 pt（模板默认）</option>
+            <option value="12.5">12.5 pt</option>
+            <option value="13">13 pt</option>
+            <option value="14">14 pt</option>
+          </select>
+          <span class="field-note">新增人物默认使用；每人可单独改</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>标题字号</label>
+          <select id="cfgTitleFont">
+            <option value="28">28 pt</option>
+            <option value="30">30 pt</option>
+            <option value="32">32 pt</option>
+            <option value="36">36 pt（模板默认）</option>
+            <option value="40">40 pt</option>
+            <option value="42">42 pt</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>姓名/职务字号</label>
+          <select id="cfgNameFont">
+            <option value="14">14 pt</option>
+            <option value="16">16 pt</option>
+            <option value="17">17 pt</option>
+            <option value="18">18 pt（模板默认）</option>
+            <option value="20">20 pt</option>
+            <option value="22">22 pt</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>简介字体颜色</label>
+        <div class="color-row">
+          <select id="cfgBioColor">
+            <option value="#000000">黑色（公文常用）</option>
+            <option value="#1f2329">深灰</option>
+            <option value="#c8202a">红色</option>
+            <option value="#17518f">深蓝</option>
+            <option value="custom">自定义颜色</option>
+          </select>
+          <input type="color" id="cfgBioColorPicker" value="#000000" title="自定义简介颜色">
+        </div>
+        <span class="field-note">按参考模板实测：简介全篇为同一个颜色（黑色）</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>人物名单</h2>
+      <div id="personList" style="display:flex;flex-direction:column;gap:12px"></div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" id="btnAdd">＋ 添加一人</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>本地历史版本</h2>
+      <div class="field">
+        <label>版本备注（可留空）</label>
+        <input type="text" id="histLabel" placeholder="如：10月定稿">
+      </div>
+      <button class="btn" id="btnSaveHistory">保存当前版本到历史</button>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </aside>
+
+  <div class="resizer" id="resizer" title="拖拽调整左侧宽度"></div>
+
+  <!-- ===== 预览区 ===== -->
+  <main class="preview">
+    <div class="preview-controls" style="margin-bottom:14px;color:var(--muted);font-size:12px">
+      每页固定 2 人。简介按各自字号排，只有放不下时才逐级缩小（每次 0.5pt）；标题、姓名、职务与照片不缩放。缩到最小仍放不下会标红提示精简，不会跨页。
+    </div>
+    <div class="preview-inner" id="preview"></div>
+  </main>
+</div>
+
+<input type="file" id="importFile" accept="application/json" style="display:none">
+
+<script>
+/* ==================== 数据与档位 ==================== */
+const STORE_KEY = "class_star_tool_v1";
+// 简介字号：默认基准字号，仅在内容放不下时才逐级缩小
+const BIO_FONT_DEFAULT = 12;
+const BIO_FONT_MIN = 9;
+const BIO_FONT_MAX_STEPS = 6;
+
+// 以基准字号生成缩放档位：基准、-0.5、-1.0……最低 9pt
+function buildSteps(base){
+  const b = Number(base) || BIO_FONT_DEFAULT;
+  const out = [];
+  for(let i=0;i<BIO_FONT_MAX_STEPS;i++){
+    const f = Math.round((b - i*0.5)*10)/10;
+    if(f < BIO_FONT_MIN) break;
+    out.push(f);
+  }
+  return out.length ? out : [BIO_FONT_DEFAULT];
+}
+
+const SAMPLE = {
+  config: { className: "初一7班", honorTitle: "习惯之星", period: "10月", bioFont: 12, bioColor: "#000000", titleFont: 36, nameFont: 18 },
+  persons: [
+    {
+      id: uid(), name: "韩xx", role: "语文课代表、组长", title: "", photo: "",
+      bio: "自从入学以来，我在班中担任语文课代表和组长。这次被评为“习惯之星”，我十分感谢老师和同学看到了我身上的闪光点，给了我被看见的机会——当然，这也离不开我自己的努力。\n我在班里学习不是最好的，但我热爱学习，努力学习，想努力成为最好的。想学习好就需要好的习惯，初中是人生的重要时刻，我也有许多好习惯，比如写作业时圈画关键语句；上课专心听讲，跟着老师思路走，认真做笔记；固定学习时间，保持专注；劳逸结合，不熬夜硬学；制定小目标，一点点完成等。\n我也会带动大家一起学习，努力让班级变得更好。作为组长，我与小组同学互相提醒、共同督促；作为语文课代表，我坚持阅读积累，配合老师工作，和同学分享语文学习方法。\n即便一直在努力，我也明白自己还有不少缺点。往后我会继续保持好习惯，严格要求自己，和同学们一起进步，努力做得越来越好，努力成为让老师放心、值得信赖、温暖带动他人的人！"
+    },
+    {
+      id: uid(), name: "李xx", role: "宣传委员、组长", title: "", photo: "",
+      bio: "好习惯是成长路上最好的伙伴。回首初一第一学期，我坚持自律，在点滴小事中养成良好习惯。日常里我按时到校，遵守班规校纪，待人文明有礼；学习上提前预习、及时复习，合理规划时间，不拖延、不浮躁。遇到难题不急于求助，先独立思考，整理错题，慢慢补齐薄弱之处。\n好习惯贵在坚持。一点一滴的自律，日积月累，才能慢慢看到变化。我知道自己还有不足，偶尔会有粗心、磨蹭的小毛病，我一直在提醒自己改正。\n播种习惯，收获成长。往后我会继续严格要求自己，守住好习惯，改正缺点，稳步向前。习惯决定成长，自律成就自己。我会继续保持良好习惯，不骄不躁，持之以恒，向着更好的自己不断努力。"
+    }
+  ]
+};
+
+// 新增人物的默认模板值：直接照此改写即可
+const DRAFT_PERSON = {
+  name: "学生姓名",
+  role: "职务",
+  title: "",
+  photo: "",
+  bio: "本月在班级中认真履行岗位职责，日常表现稳定，按时到校、遵守班规校纪，待人文明有礼，与同学相处融洽。\n学习上提前预习、及时复习，能合理安排时间，作业完成质量较好；遇到难题先独立思考，主动整理错题，逐步补齐薄弱环节。\n在集体事务中愿意承担责任，配合老师完成班级工作，能带动身边同学一起进步，是老师放心、同学信赖的小助手。\n希望继续保持良好习惯，严格要求自己，在下一阶段取得更稳定的进步。"
+};
+
+let state = loadState();
+
+function uid(){ return "p" + Math.random().toString(36).slice(2,9); }
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && Array.isArray(s.persons)){
+        s.config = s.config || {};
+        if(!(parseFloat(s.config.bioFont) > 0)) s.config.bioFont = BIO_FONT_DEFAULT;
+        if(!s.config.bioColor || s.config.bioColor === "gradient") s.config.bioColor = "#000000";
+        if(!(parseFloat(s.config.titleFont) > 0)) s.config.titleFont = 36;
+        if(!(parseFloat(s.config.nameFont) > 0)) s.config.nameFont = 18;
+        delete s.config.scaleMode;
+        s.persons.forEach(p=>{
+          if(!("bioFont" in p)) p.bioFont = null;
+        });
+        return s;
+      }
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(SAMPLE));
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ==================== 工具函数 ==================== */
+function esc(str){
+  return String(str==null?"":str).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function bioParagraphs(bio){
+  return String(bio||"").split(/\n+/).map(s=>s.trim()).filter(Boolean);
+}
+function personTitle(person){
+  const t = person.title && person.title.trim();
+  return t || state.config.honorTitle || "";
+}
+function fullTitle(person){
+  const c = state.config.className ? state.config.className.trim() : "";
+  const h = personTitle(person);
+  return [c, h].filter(Boolean).join(" ");
+}
+
+/* ==================== 编辑面板渲染 ==================== */
+function renderEditor(){
+  const list = document.getElementById("personList");
+  list.innerHTML = "";
+  state.persons.forEach((p, i) => {
+    const item = document.createElement("div");
+    item.className = "person-item";
+    item.dataset.id = p.id;
+    item.innerHTML = `
+      <div class="pi-head">
+        <span class="idx">${i+1}</span>
+        <span class="pi-title">${esc(p.name) || "未命名"}</span>
+        <span class="pi-actions">
+          <button data-act="up" ${i===0?"disabled":""}>上移</button>
+          <button data-act="down" ${i===state.persons.length-1?"disabled":""}>下移</button>
+          <button data-act="copy">复制</button>
+          <button data-act="del">删除</button>
+        </span>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>姓名</label><input type="text" data-f="name" value="${esc(p.name)}"></div>
+        <div class="field"><label>职务</label><input type="text" data-f="role" placeholder="多个职务用顿号分隔" value="${esc(p.role)}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>简介字号</label>
+          <select data-f="bioFont">
+            <option value="" ${p.bioFont==null?"selected":""}>跟随全局（${state.config.bioFont} pt）</option>
+            ${[10.5,11,11.5,12,12.5,13,14].map(f=>`<option value="${f}" ${Number(p.bioFont)===f?"selected":""}>${f} pt</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>称号覆写（留空用全局）</label>
+        <input type="text" data-f="title" placeholder="留空则使用上方全局称号" value="${esc(p.title)}">
+      </div>
+      <div class="photo-box">
+        ${p.photo
+          ? `<img class="photo-thumb" src="${p.photo}" alt="照片" data-act="photo" title="点击更换照片" style="cursor:pointer">`
+          : `<div class="photo-thumb empty" data-act="photo" title="点击选择本地照片" style="cursor:pointer">照片位</div>`}
+        <div class="photo-ops">
+          <button data-act="photo">${p.photo ? "更换照片" : "选择本地照片"}</button>
+          ${p.photo ? `<button data-act="photoDel">移除照片</button>` : ""}
+        </div>
+      </div>
+      <div class="field">
+        <label>简介（多行分段）</label>
+        <textarea data-f="bio" rows="5">${esc(p.bio)}</textarea>
+      </div>`;
+    list.appendChild(item);
+  });
+
+  // 字段输入：只更新 state 与预览，不重建编辑区（避免失焦）
+  list.querySelectorAll("input,textarea,select").forEach(el=>{
+    const evt = el.tagName === "SELECT" ? "change" : "input";
+    el.addEventListener(evt, ()=>{
+      const id = el.closest(".person-item").dataset.id;
+      const p = state.persons.find(x=>x.id===id);
+      if(!p) return;
+      if(el.dataset.f === "bioFont"){
+        p.bioFont = el.value === "" ? null : parseFloat(el.value);
+      }else{
+        p[el.dataset.f] = el.value;
+      }
+      save(); renderPreview(); updateStat();
+    });
+  });
+  // 操作按钮（含缩略图、照片操作、排序复制删除）
+  list.querySelectorAll("[data-act]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const id = el.closest(".person-item").dataset.id;
+      const idx = state.persons.findIndex(x=>x.id===id);
+      const act = el.dataset.act;
+      if(act==="up" && idx>0){ swap(idx,idx-1); }
+      else if(act==="down" && idx<state.persons.length-1){ swap(idx,idx+1); }
+      else if(act==="copy"){ duplicate(idx); }
+      else if(act==="del"){ state.persons.splice(idx,1); }
+      else if(act==="photo"){ pickPhoto(id); return; }
+      else if(act==="photoDel"){ const p=state.persons[idx]; p.photo=""; }
+      save(); renderEditor(); renderPreview(); updateStat();
+    });
+  });
+}
+
+function swap(a,b){ const t=state.persons[a]; state.persons[a]=state.persons[b]; state.persons[b]=t; }
+function duplicate(idx){
+  const src = state.persons[idx];
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.id = uid(); copy.name = src.name + "（副本）";
+  state.persons.splice(idx+1,0,copy);
+}
+
+/* ==================== 照片处理 ==================== */
+let pendingPhotoId = null;
+function pickPhoto(id){
+  pendingPhotoId = id;
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*";
+  inp.addEventListener("change", ()=>{
+    const f = inp.files[0];
+    if(f) readPhoto(f, id);
+  });
+  inp.click();
+}
+function readPhoto(file, id){
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const maxSide = 800;
+      let w = img.width, h = img.height;
+      if(Math.max(w,h) > maxSide){
+        const k = maxSide / Math.max(w,h);
+        w = Math.round(w*k); h = Math.round(h*k);
+      }
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      const data = cv.toDataURL("image/jpeg", .85);
+      const p = state.persons.find(x=>x.id===id);
+      if(p){ p.photo = data; save(); renderEditor(); renderPreview(); }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+// 粘贴照片
+document.addEventListener("paste", e=>{
+  if(!pendingPhotoId) return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  for(const it of items){
+    if(it.type.startsWith("image/")){
+      const f = it.getAsFile();
+      if(f) readPhoto(f, pendingPhotoId);
+      break;
+    }
+  }
+});
+
+/* ==================== 预览渲染与分页 ==================== */
+function renderPreview(){
+  const box = document.getElementById("preview");
+  box.innerHTML = "";
+  const persons = state.persons;
+  if(persons.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "sheet sheet-empty";
+    empty.textContent = "请在左侧添加人物；打印时本空页不会输出。";
+    box.appendChild(empty);
+    return;
+  }
+  // 每页 2 人切分
+  const pages = [];
+  for(let i=0;i<persons.length;i+=2){ pages.push(persons.slice(i,i+2)); }
+
+  const personEls = []; // { person, el, bio, photoEl, page, step, steps, overflow }
+  const bioColor = (state.config.bioColor && state.config.bioColor !== "gradient") ? state.config.bioColor : "#000000";
+
+  pages.forEach((page, pi)=>{
+    const sheet = document.createElement("div");
+    sheet.className = "sheet";
+    page.forEach(p=>{
+      const el = document.createElement("div");
+      el.className = "person";
+      const title = fullTitle(p);
+      const bioHtml = bioParagraphs(p.bio).map(t=>`<p>${esc(t)}</p>`).join("");
+      const photoInner = p.photo
+        ? `<img src="${p.photo}" alt="照片">`
+        : `<div class="ph-empty" style="height:75.7mm">照片位</div>`;
+      // 单人字号优先，留空则跟随全局
+      const stepList = buildSteps(p.bioFont != null ? p.bioFont : state.config.bioFont);
+      el.innerHTML = `
+        <div class="p-title" style="font-size:${state.config.titleFont}pt">${esc(title)}</div>
+        <div class="p-name" style="font-size:${state.config.nameFont}pt"><b>${esc(p.name)}</b>${p.role?`<span class="role">（${esc(p.role)}）</span>`:""}</div>
+        <div class="p-photo">${photoInner}</div>
+        <div class="p-bio" style="color:${bioColor}">${bioHtml}</div>`;
+      sheet.appendChild(el);
+      personEls.push({ person:p, el, bio: el.querySelector(".p-bio"), photoEl: el.querySelector(".p-photo"), page: pi, step: 0, steps: stepList, overflow:false });
+    });
+    // 第二格留白（奇数人）
+    if(page.length===1){
+      const slot = document.createElement("div");
+      slot.className = "person";
+      sheet.appendChild(slot);
+    }
+    box.appendChild(sheet);
+  });
+
+  applySteps(personEls);
+}
+
+/* 测量并确定档位：能放下就用本人设定字号，放不下才逐级缩小；各人独立 */
+function applySteps(personEls){
+  personEls.forEach(pe=>{
+    let okStep = -1;
+    for(let s=0;s<pe.steps.length;s++){
+      setStep(pe, s);
+      if(fits(pe)){ okStep = s; break; }
+    }
+    if(okStep === -1){ okStep = pe.steps.length-1; pe.overflow = true; }
+    pe.step = okStep;
+    setStep(pe, okStep);
+    if(!fits(pe)){ pe.overflow = true; pe.el.classList.add("overflow"); addNote(pe); }
+  });
+}
+
+function setStep(pe, s){
+  pe.bio.style.fontSize = pe.steps[s] + "pt";
+}
+function fits(pe){
+  return pe.bio.scrollHeight <= pe.bio.clientHeight + 1;
+}
+function addNote(pe){
+  const note = document.createElement("div");
+  note.className = "p-overflow-note";
+  const chars = bioParagraphs(pe.person.bio).join("").length;
+  const ratio = Math.min(1, pe.bio.clientHeight / Math.max(1, pe.bio.scrollHeight));
+  const suggest = Math.max(60, Math.floor(chars * ratio * 0.92 / 10) * 10);
+  note.textContent = `已缩至最小 ${pe.steps[pe.steps.length-1]}pt 仍超出，建议精简至约 ${suggest} 字`;
+  pe.el.appendChild(note);
+}
+
+/* ==================== 统计与工具栏 ==================== */
+function updateStat(){
+  const n = state.persons.length;
+  const pages = Math.max(1, Math.ceil(n/2));
+  document.getElementById("statHint").textContent = `${n} 人 · ${pages} 页`;
+}
+
+document.getElementById("btnAdd").addEventListener("click", ()=>{
+  const p = JSON.parse(JSON.stringify(DRAFT_PERSON));
+  p.id = uid();
+  state.persons.push(p);
+  save(); renderEditor(); renderPreview(); updateStat();
+  // 滚动到新增条目，并选中姓名框便于直接改写
+  const item = document.querySelector(`.person-item[data-id="${p.id}"]`);
+  if(item){
+    item.scrollIntoView({behavior:"smooth", block:"center"});
+    const nameInput = item.querySelector('input[data-f="name"]');
+    if(nameInput){ nameInput.focus(); nameInput.select(); }
+  }
+});
+document.getElementById("btnClear").addEventListener("click", ()=>{
+  if(!confirm("确定清空全部人物与设置？此操作不可恢复。")) return;
+  state = JSON.parse(JSON.stringify(SAMPLE));
+  state.persons = [];
+  save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
+});
+document.getElementById("btnPrint").addEventListener("click", ()=>{ window.print(); });
+
+/* 全局设置输入 */
+function syncConfigInputs(){
+  document.getElementById("cfgClass").value = state.config.className || "";
+  document.getElementById("cfgTitle").value = state.config.honorTitle || "";
+  document.getElementById("cfgPeriod").value = state.config.period || "";
+  document.getElementById("cfgBioFont").value = String(state.config.bioFont || BIO_FONT_DEFAULT);
+  document.getElementById("cfgTitleFont").value = String(state.config.titleFont || 36);
+  document.getElementById("cfgNameFont").value = String(state.config.nameFont || 18);
+  const sel = document.getElementById("cfgBioColor");
+  const picker = document.getElementById("cfgBioColorPicker");
+  const c = (state.config.bioColor && state.config.bioColor !== "gradient") ? state.config.bioColor : "#000000";
+  sel.value = ["#000000","#1f2329","#c8202a","#17518f"].includes(c) ? c : "custom";
+  picker.value = c;
+}
+[["cfgClass","className"],["cfgTitle","honorTitle"],["cfgPeriod","period"]].forEach(([id,key])=>{
+  document.getElementById(id).addEventListener("input", e=>{
+    state.config[key] = e.target.value; save(); renderPreview();
+  });
+});
+document.getElementById("cfgBioFont").addEventListener("change", e=>{
+  state.config.bioFont = parseFloat(e.target.value) || BIO_FONT_DEFAULT;
+  save(); renderEditor(); renderPreview();
+});
+document.getElementById("cfgTitleFont").addEventListener("change", e=>{
+  state.config.titleFont = parseFloat(e.target.value) || 36;
+  save(); renderPreview();
+});
+document.getElementById("cfgNameFont").addEventListener("change", e=>{
+  state.config.nameFont = parseFloat(e.target.value) || 18;
+  save(); renderPreview();
+});
+document.getElementById("cfgBioColor").addEventListener("change", e=>{
+  const v = e.target.value;
+  if(v === "custom"){
+    state.config.bioColor = document.getElementById("cfgBioColorPicker").value || "#000000";
+  }else{
+    state.config.bioColor = v;
+    document.getElementById("cfgBioColorPicker").value = v;
+  }
+  save(); renderPreview();
+});
+document.getElementById("cfgBioColorPicker").addEventListener("input", e=>{
+  state.config.bioColor = e.target.value;
+  document.getElementById("cfgBioColor").value = "custom";
+  save(); renderPreview();
+});
+
+/* 缩放 */
+document.getElementById("scaleSel").addEventListener("change", e=>{
+  const v = e.target.value;
+  const inner = document.getElementById("preview");
+  if(v === "1"){ inner.style.setProperty("--scale", "1"); inner.style.marginBottom = "0px"; }
+  else{ fitWidth(inner); }
+});
+function fitWidth(inner){
+  const avail = inner.parentElement.clientWidth - 20;
+  const paperW = 297 * 3.7795; // mm -> px @96dpi
+  const k = Math.min(1, avail / paperW);
+  inner.style.setProperty("--scale", k.toFixed(3));
+  // 缩放后按视觉高度回收占位，避免右侧滚动条出现大片空白
+  const rawH = inner.offsetHeight;
+  inner.style.marginBottom = k < 1 ? (-(rawH * (1 - k)).toFixed(0) + "px") : "0px";
+}
+window.addEventListener("resize", ()=>{
+  if(document.getElementById("scaleSel").value === "fit") fitWidth(document.getElementById("preview"));
+});
+
+/* 导入 / 导出 JSON */
+document.getElementById("btnExport").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `班级之星-${state.config.period||"数据"}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById("btnImport").addEventListener("click", ()=>{
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const s = JSON.parse(ev.target.result);
+      if(s && Array.isArray(s.persons)){
+        state = s;
+        save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
+      }else{ alert("文件格式不正确：缺少 persons 列表"); }
+    }catch(err){ alert("导入失败：不是有效的 JSON 文件"); }
+  };
+  reader.readAsText(f);
+  e.target.value = "";
+});
+
+/* ==================== 本地历史版本 ==================== */
+const HISTORY_KEY = "class_star_history_v1";
+const HISTORY_LIMIT = 20;
+
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if(raw){ const a = JSON.parse(raw); if(Array.isArray(a)) return a; }
+  }catch(e){}
+  return [];
+}
+function persistHistory(list){
+  try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
+  catch(e){ alert("本地存储空间不足，历史保存失败。建议减少照片，或先导出 JSON 备份。"); throw e; }
+}
+function historyName(h){
+  const c = (h.snapshot && h.snapshot.config) || {};
+  const base = [c.className, c.honorTitle, c.period].filter(Boolean).join(" ");
+  return h.label || base || "未命名版本";
+}
+function fmtTime(ts){
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2,"0");
+  return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function renderHistory(){
+  const box = document.getElementById("historyList");
+  const list = loadHistory();
+  box.innerHTML = "";
+  if(!list.length){
+    box.innerHTML = '<div class="history-empty">暂无历史版本，保存当前内容后可在此回看、复用上一期。</div>';
+    return;
+  }
+  list.slice().reverse().forEach(h=>{
+    const item = document.createElement("div");
+    item.className = "history-item";
+    const n = (h.snapshot && Array.isArray(h.snapshot.persons)) ? h.snapshot.persons.length : 0;
+    item.innerHTML = `
+      <div class="hi-name">${esc(historyName(h))}</div>
+      <div class="hi-meta">${fmtTime(h.savedAt)} · ${n} 人</div>
+      <div class="hi-actions">
+        <button data-hi="load" data-id="${h.id}">载入</button>
+        <button class="del" data-hi="del" data-id="${h.id}">删除</button>
+      </div>`;
+    box.appendChild(item);
+  });
+  box.querySelectorAll("button").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.dataset.id;
+      if(btn.dataset.hi === "load") loadHistoryItem(id);
+      else deleteHistoryItem(id);
+    });
+  });
+}
+function saveHistoryCurrent(){
+  const label = document.getElementById("histLabel").value.trim();
+  const list = loadHistory();
+  list.push({ id: uid(), savedAt: Date.now(), label, snapshot: JSON.parse(JSON.stringify(state)) });
+  while(list.length > HISTORY_LIMIT) list.shift();
+  persistHistory(list);
+  document.getElementById("histLabel").value = "";
+  renderHistory();
+}
+function loadHistoryItem(id){
+  const h = loadHistory().find(x=>x.id===id);
+  if(!h) return;
+  if(!confirm("载入该版本将覆盖当前编辑内容，是否继续？")) return;
+  state = JSON.parse(JSON.stringify(h.snapshot));
+  state.config = state.config || {};
+  state.persons = Array.isArray(state.persons) ? state.persons : [];
+  save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
+}
+function deleteHistoryItem(id){
+  if(!confirm("确定删除这条历史版本？")) return;
+  persistHistory(loadHistory().filter(x=>x.id!==id));
+  renderHistory();
+}
+document.getElementById("btnSaveHistory").addEventListener("click", saveHistoryCurrent);
+
+/* ==================== 左栏宽度拖拽 ==================== */
+const RESIZE_KEY = "class_star_layout_v1";
+const resizer = document.getElementById("resizer");
+const editorEl = document.querySelector(".editor");
+let drag = null;
+
+function loadLayoutWidth(){
+  const w = parseFloat(localStorage.getItem(RESIZE_KEY));
+  if(w && w > 260) editorEl.style.width = w + "px";
+}
+resizer.addEventListener("pointerdown", e=>{
+  drag = { x: e.clientX, w: editorEl.getBoundingClientRect().width };
+  resizer.setPointerCapture(e.pointerId);
+  resizer.classList.add("active");
+  document.body.classList.add("resizing");
+  e.preventDefault();
+});
+resizer.addEventListener("pointermove", e=>{
+  if(!drag) return;
+  const min = 280, max = window.innerWidth * 0.6;
+  const w = Math.min(max, Math.max(min, drag.w + (e.clientX - drag.x)));
+  editorEl.style.width = w + "px";
+  fitWidth(document.getElementById("preview"));
+});
+function endDrag(){
+  if(!drag) return;
+  drag = null;
+  resizer.classList.remove("active");
+  document.body.classList.remove("resizing");
+  try{ localStorage.setItem(RESIZE_KEY, editorEl.getBoundingClientRect().width); }catch(_){}
+  fitWidth(document.getElementById("preview"));
+}
+resizer.addEventListener("pointerup", endDrag);
+resizer.addEventListener("pointercancel", endDrag);
+
+/* ==================== 初始化 ==================== */
+loadLayoutWidth();
+renderHistory();
+syncConfigInputs();
+renderEditor();
+renderPreview();
+updateStat();
+fitWidth(document.getElementById("preview"));
+</script>
+</body>
+</html>
