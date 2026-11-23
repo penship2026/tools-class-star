@@ -45,6 +45,36 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink)}
 .btn.danger:hover{border-color:#d83931;color:#d83931}
 .toolbar select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
 .toolbar .hint{color:var(--muted);font-size:12px}
+.btn.active{border-color:var(--brand);color:var(--brand);background:var(--brand-soft,#fdecee)}
+
+/* ===== 顶部使用说明（可折叠） ===== */
+.guide{
+  flex:0 0 auto;background:#fff;border-bottom:1px solid var(--line);
+  padding:14px 16px 16px;
+}
+.guide[hidden]{display:none}
+.guide-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.guide-head strong{font-size:14px}
+.guide-head .guide-sub{font-size:12px;color:var(--muted)}
+.guide-close{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 10px;font-size:12px;color:var(--muted);white-space:nowrap}
+.guide-close:hover{border-color:var(--brand);color:var(--brand)}
+.guide-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.g-step{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fafbfc}
+.g-step .num{
+  width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-bottom:8px;
+}
+.g-step h3{font-size:13px;font-weight:700;margin-bottom:5px}
+.g-step p{font-size:12px;color:var(--muted);line-height:1.6}
+.guide-tip{margin-top:12px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+.guide-tip b{color:var(--ink)}
+@media (max-width:900px){
+  .guide-steps{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  .guide{padding:12px}
+  .guide-steps{grid-template-columns:1fr;gap:10px}
+}
 
 /* ===== 主布局：左右独立滚动，左栏可拖拽调宽 ===== */
 .toolbar{flex:0 0 auto}
@@ -119,6 +149,14 @@ body.resizing{user-select:none;cursor:col-resize}
 .history-item .hi-actions button:hover{border-color:var(--brand);color:var(--brand)}
 .history-item .hi-actions button.del:hover{border-color:#d83931;color:#d83931}
 
+/* 数据隐私说明 */
+.privacy{background:#f7f9f7;border-color:#d6e4d8}
+.privacy h2{display:flex;align-items:center;gap:6px}
+.privacy h2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok,#177245);display:inline-block}
+.privacy ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:7px}
+.privacy li{font-size:12px;color:var(--muted);line-height:1.6}
+.privacy li b{color:var(--ink)}
+
 /* ===== 预览区 ===== */
 .preview{padding:24px 20px 60px;overflow:auto}
 .preview-inner{--scale:1;transform:scale(var(--scale));transform-origin:top center;display:flex;flex-direction:column;gap:20mm;align-items:center}
@@ -131,7 +169,7 @@ body.resizing{user-select:none;cursor:col-resize}
 .sheet-empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px}
 
 /* 人物卡（版面） */
-.person{display:flex;flex-direction:column;min-width:0;min-height:0;break-inside:avoid}
+.person{display:flex;flex-direction:column;min-width:0;min-height:0;break-inside:avoid;position:relative}
 /* 标题/姓名为模板固定样式（字重、颜色、描边不变），仅字号可由全局设置调整 */
 .p-title{
   font-family:SimHei,"Heiti SC","Source Han Sans SC",sans-serif;font-weight:700;color:#FF0000;
@@ -144,9 +182,9 @@ body.resizing{user-select:none;cursor:col-resize}
   font-family:SimSun,"Songti SC","Source Han Serif SC",serif;color:#000;
   line-height:1.3;margin:3.5mm 0 3mm;
 }
-.p-name b{flex:0 1 auto;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-name b{flex:0 1 auto;min-width:5em;font-weight:400;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-name .role{
-  flex:0 0 auto;font-weight:400;text-align:right;
+  flex:0 1 auto;min-width:0;font-weight:400;text-align:right;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .p-photo{width:118mm;height:75.7mm;margin:0 auto;border-radius:8px;overflow:hidden;flex-shrink:0}
@@ -154,6 +192,7 @@ body.resizing{user-select:none;cursor:col-resize}
 .p-photo .ph-empty{width:100%;display:flex;align-items:center;justify-content:center;color:#b6b9bf;background:#f2f3f5;font-size:12pt}
 .p-bio{flex:1;min-height:0;overflow:hidden;margin-top:3mm;text-align:justify}
 .p-bio p{text-indent:2em;margin:0 0 .35em}
+.p-title.wrap{white-space:normal;line-height:1.12;max-height:2.3em}
 .person.overflow .p-bio{outline:1px dashed #d83931}
 .p-overflow-note{position:absolute;bottom:4mm;right:8mm;font-size:9pt;color:#d83931}
 
@@ -177,30 +216,74 @@ body.resizing{user-select:none;cursor:col-resize}
 @page{size:A4 landscape;margin:0}
 @media print{
   body{background:#fff;display:block;height:auto;overflow:visible}
-  .toolbar,.editor,.preview-controls{display:none !important}
+  .toolbar,.editor,.preview-controls,.guide{display:none !important}
   .preview{padding:0;overflow:visible}
   .preview-inner{--scale:1 !important;transform:none;gap:0;align-items:stretch;margin-bottom:0 !important}
   .sheet{box-shadow:none;margin:0;width:297mm;height:210mm}
+  .p-overflow-note{display:none !important}
+  .person.overflow .p-bio{outline:none !important}
+  .sheet-empty{display:none !important}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
 <body>
+<noscript><div style="padding:24px;font-size:14px">本工具需要启用 JavaScript 才能使用，请在浏览器设置中允许后刷新页面。</div></noscript>
 
 <!-- ===== 工具栏 ===== -->
 <div class="toolbar">
   <h1>班级之星 A4 打印工具</h1>
   <button class="btn primary" id="btnPrint">打印 / 导出 PDF</button>
+  <button class="btn" id="btnGuide">使用说明</button>
   <button class="btn" id="btnExport">导出数据</button>
   <button class="btn" id="btnImport">导入数据</button>
   <button class="btn danger" id="btnClear">清空全部</button>
   <span class="spacer"></span>
   <label class="hint">预览缩放</label>
-  <select id="scaleSel">
+  <select id="scaleSel" aria-label="预览缩放">
     <option value="fit">适宽</option>
     <option value="1">100%</option>
   </select>
-  <span class="hint" id="statHint"></span>
+  <span class="hint" id="statHint" aria-live="polite"></span>
+</div>
+
+<!-- ===== 顶部使用说明 ===== -->
+<div class="guide" id="guideBox">
+  <div class="guide-head">
+    <strong>使用说明</strong>
+    <span class="guide-sub">按下面五步填写，右侧实时预览，确认无误后打印</span>
+    <button class="guide-close" id="btnGuideClose">收起说明</button>
+  </div>
+  <div class="guide-steps">
+    <div class="g-step">
+      <div class="num">1</div>
+      <h3>填全局设置</h3>
+      <p>在左侧填写班级 / 单位、荣誉称号、期次；可调整标题字号、姓名职务字号、简介默认字号与颜色。</p>
+    </div>
+    <div class="g-step">
+      <div class="num">2</div>
+      <h3>添加并填写人物</h3>
+      <p>点「＋ 添加一人」，填写姓名、职务、简介；可单独改该人简介字号，或覆写称号；点照片位选择本地照片，也可直接粘贴图片。</p>
+    </div>
+    <div class="g-step">
+      <div class="num">3</div>
+      <h3>调整顺序与分页</h3>
+      <p>用「上移 / 下移」调整先后；超过 2 人自动分页，每页固定 2 人，单人不会被拆到两页。左栏宽度可拖拽，左右各自独立滚动。</p>
+    </div>
+    <div class="g-step">
+      <div class="num">4</div>
+      <h3>保存历史与备份</h3>
+      <p>可把当前内容存为历史版本，下一期直接复用；重要内容用「导出数据」存 JSON，需要时「导入数据」恢复。草稿会自动保存在本机浏览器。</p>
+    </div>
+    <div class="g-step">
+      <div class="num">5</div>
+      <h3>预览并打印</h3>
+      <p>右侧对照 A4 预览确认排版；点「打印 / 导出 PDF」，纸张选 A4 横向、缩放 100%、边距选「无」，关闭「适应边框打印」。简介标红时请先精简文字。</p>
+    </div>
+  </div>
+  <div class="guide-tip">
+    <b>小提示：</b>简介建议控制在 380 字以内；标题、姓名职务和照片尺寸不会随简介缩放；所有数据只保存在本机浏览器，不上传网络。
+  </div>
 </div>
 
 <div class="layout">
@@ -211,21 +294,21 @@ body.resizing{user-select:none;cursor:col-resize}
       <div class="field-row">
         <div class="field">
           <label>班级 / 单位</label>
-          <input type="text" id="cfgClass" placeholder="如：初一7班">
+          <input type="text" id="cfgClass" aria-label="班级或单位" placeholder="如：初一7班">
         </div>
         <div class="field">
           <label>荣誉称号</label>
-          <input type="text" id="cfgTitle" placeholder="如：习惯之星">
+          <input type="text" id="cfgTitle" aria-label="荣誉称号" placeholder="如：习惯之星">
         </div>
       </div>
       <div class="field-row">
         <div class="field">
           <label>期次</label>
-          <input type="text" id="cfgPeriod" placeholder="如：10月（仅记录）">
+          <input type="text" id="cfgPeriod" aria-label="期次" placeholder="如：10月（仅记录）">
         </div>
         <div class="field">
           <label>简介默认字号</label>
-          <select id="cfgBioFont">
+          <select id="cfgBioFont" aria-label="简介默认字号">
             <option value="10.5">10.5 pt</option>
             <option value="11">11 pt</option>
             <option value="11.5">11.5 pt</option>
@@ -240,7 +323,7 @@ body.resizing{user-select:none;cursor:col-resize}
       <div class="field-row">
         <div class="field">
           <label>标题字号</label>
-          <select id="cfgTitleFont">
+          <select id="cfgTitleFont" aria-label="标题字号">
             <option value="28">28 pt</option>
             <option value="30">30 pt</option>
             <option value="32">32 pt</option>
@@ -251,7 +334,7 @@ body.resizing{user-select:none;cursor:col-resize}
         </div>
         <div class="field">
           <label>姓名/职务字号</label>
-          <select id="cfgNameFont">
+          <select id="cfgNameFont" aria-label="姓名和职务字号">
             <option value="14">14 pt</option>
             <option value="16">16 pt</option>
             <option value="17">17 pt</option>
@@ -264,14 +347,14 @@ body.resizing{user-select:none;cursor:col-resize}
       <div class="field">
         <label>简介字体颜色</label>
         <div class="color-row">
-          <select id="cfgBioColor">
+          <select id="cfgBioColor" aria-label="简介字体颜色">
             <option value="#000000">黑色（公文常用）</option>
             <option value="#1f2329">深灰</option>
             <option value="#c8202a">红色</option>
             <option value="#17518f">深蓝</option>
             <option value="custom">自定义颜色</option>
           </select>
-          <input type="color" id="cfgBioColorPicker" value="#000000" title="自定义简介颜色">
+          <input type="color" id="cfgBioColorPicker" value="#000000" aria-label="自定义简介颜色" title="自定义简介颜色">
         </div>
         <span class="field-note">按参考模板实测：简介全篇为同一个颜色（黑色）</span>
       </div>
@@ -289,14 +372,24 @@ body.resizing{user-select:none;cursor:col-resize}
       <h2>本地历史版本</h2>
       <div class="field">
         <label>版本备注（可留空）</label>
-        <input type="text" id="histLabel" placeholder="如：10月定稿">
+        <input type="text" id="histLabel" aria-label="版本备注" placeholder="如：10月定稿">
       </div>
       <button class="btn" id="btnSaveHistory">保存当前版本到历史</button>
       <div class="history-list" id="historyList"></div>
     </div>
+
+    <div class="panel privacy">
+      <h2>数据与隐私说明</h2>
+      <ul>
+        <li><b>纯前端本地运行：</b>本工具是单个 HTML 文件，不连接任何服务端，没有后台数据库，所有填写内容<b>不会上传网络</b>。</li>
+        <li><b>数据存在本机浏览器：</b>人物姓名、职务、简介、照片和历史版本均保存在当前浏览器本地存储中；照片在浏览器内压缩后以图片数据随本地内容保存。</li>
+        <li><b>离线可用：</b>双击打开 HTML 文件即可使用，无需联网；更换浏览器、清理浏览数据或删除文件后，本地内容可能丢失。</li>
+        <li><b>建议自行备份：</b>重要内容请用顶部「导出数据」保存 JSON 文件，需要时通过「导入数据」恢复。</li>
+      </ul>
+    </div>
   </aside>
 
-  <div class="resizer" id="resizer" title="拖拽调整左侧宽度"></div>
+  <div class="resizer" id="resizer" title="拖拽调整左侧宽度" role="separator" aria-orientation="vertical" aria-label="调整编辑区宽度" tabindex="0"></div>
 
   <!-- ===== 预览区 ===== -->
   <main class="preview">
@@ -310,23 +403,69 @@ body.resizing{user-select:none;cursor:col-resize}
 <input type="file" id="importFile" accept="application/json" style="display:none">
 
 <script>
-/* ==================== 数据与档位 ==================== */
+/* ==================== 常量与存储封装 ==================== */
 const STORE_KEY = "class_star_tool_v1";
-// 简介字号：默认基准字号，仅在内容放不下时才逐级缩小
+const HISTORY_KEY = "class_star_history_v1";
+const PHOTO_KEY = "class_star_photos_v1";
+const RESIZE_KEY = "class_star_layout_v1";
+const GUIDE_KEY = "class_star_guide_v1";
+
+const HISTORY_LIMIT = 20;
+const MAX_PERSONS = 200;
 const BIO_FONT_DEFAULT = 12;
 const BIO_FONT_MIN = 9;
-const BIO_FONT_MAX_STEPS = 6;
+const TITLE_FONT_MIN = 22;
+const PHOTO_MAX_SIDE = 1100;
 
-// 以基准字号生成缩放档位：基准、-0.5、-1.0……最低 9pt
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+};
+
+/* ==================== 输入校验：导入与本地数据统一走这里 ==================== */
+const PHOTO_RE = /^data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=\s]+$/;
+const COLOR_RE = /^#[0-9a-fA-F]{3,8}$/;
+
+function safePhoto(v){
+  const s = typeof v === "string" ? v.trim() : "";
+  return PHOTO_RE.test(s) ? s : "";
+}
+function safeColor(v, def){
+  const s = typeof v === "string" ? v.trim() : "";
+  return COLOR_RE.test(s) ? s : (def || "#000000");
+}
+function safeFont(v, def, min, max){
+  const n = parseFloat(v);
+  if(!Number.isFinite(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
+function safeText(v, max){
+  if(v == null) return "";
+  const s = typeof v === "string" ? v : String(v);
+  return s.length > max ? s.slice(0, max) : s;
+}
+function esc(str){
+  return String(str==null?"":str).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function hexForPicker(c){
+  const s = safeColor(c, "#000000");
+  if(/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+  if(/^#[0-9a-fA-F]{3}$/.test(s)) return ("#" + s[1]+s[1]+s[2]+s[2]+s[3]+s[3]).toLowerCase();
+  return "#000000";
+}
+function uid(){ return "p" + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-3); }
+
+/* 简介字号档位：基准、-0.5、-1.0……最低 9pt */
 function buildSteps(base){
-  const b = Number(base) || BIO_FONT_DEFAULT;
+  const b = safeFont(base, BIO_FONT_DEFAULT, BIO_FONT_MIN, 20);
   const out = [];
-  for(let i=0;i<BIO_FONT_MAX_STEPS;i++){
-    const f = Math.round((b - i*0.5)*10)/10;
-    if(f < BIO_FONT_MIN) break;
+  for(let f = b; f >= BIO_FONT_MIN - 1e-9; f = Math.round((f - 0.5) * 10) / 10){
     out.push(f);
+    if(out.length > 40) break;
   }
-  return out.length ? out : [BIO_FONT_DEFAULT];
+  return out.length ? out : [BIO_FONT_MIN];
 }
 
 const SAMPLE = {
@@ -352,52 +491,91 @@ const DRAFT_PERSON = {
   bio: "本月在班级中认真履行岗位职责，日常表现稳定，按时到校、遵守班规校纪，待人文明有礼，与同学相处融洽。\n学习上提前预习、及时复习，能合理安排时间，作业完成质量较好；遇到难题先独立思考，主动整理错题，逐步补齐薄弱环节。\n在集体事务中愿意承担责任，配合老师完成班级工作，能带动身边同学一起进步，是老师放心、同学信赖的小助手。\n希望继续保持良好习惯，严格要求自己，在下一阶段取得更稳定的进步。"
 };
 
-let state = loadState();
+/* ==================== 数据规范化 ==================== */
+function normalizeState(raw){
+  const s = (raw && typeof raw === "object") ? raw : {};
+  const c = (s.config && typeof s.config === "object") ? s.config : {};
+  const out = {
+    version: 1,
+    config: {
+      className: safeText(c.className, 40),
+      honorTitle: safeText(c.honorTitle, 40),
+      period: safeText(c.period, 40),
+      bioFont: safeFont(c.bioFont, BIO_FONT_DEFAULT, 10.5, 14),
+      bioColor: safeColor(c.bioColor, "#000000"),
+      titleFont: safeFont(c.titleFont, 36, 28, 42),
+      nameFont: safeFont(c.nameFont, 18, 14, 22)
+    },
+    persons: []
+  };
+  const seen = new Set();
+  const list = Array.isArray(s.persons) ? s.persons.slice(0, MAX_PERSONS) : [];
+  list.forEach(p=>{
+    if(!p || typeof p !== "object") return;
+    let id = (typeof p.id === "string" && p.id) ? p.id : uid();
+    while(seen.has(id)) id = uid();
+    seen.add(id);
+    out.persons.push({
+      id,
+      name: safeText(p.name, 40),
+      role: safeText(p.role, 60),
+      title: safeText(p.title, 40),
+      photo: safePhoto(p.photo),
+      bio: safeText(p.bio, 5000),
+      bioFont: (p.bioFont == null || p.bioFont === "") ? null : safeFont(p.bioFont, 12, 10.5, 14)
+    });
+  });
+  return out;
+}
 
-function uid(){ return "p" + Math.random().toString(36).slice(2,9); }
+let state = loadState();
+let saveTimer = null, renderTimer = null, lastQuotaWarn = 0;
 
 function loadState(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(raw){
+  const raw = store.get(STORE_KEY);
+  if(raw){
+    try{
       const s = JSON.parse(raw);
-      if(s && Array.isArray(s.persons)){
-        s.config = s.config || {};
-        if(!(parseFloat(s.config.bioFont) > 0)) s.config.bioFont = BIO_FONT_DEFAULT;
-        if(!s.config.bioColor || s.config.bioColor === "gradient") s.config.bioColor = "#000000";
-        if(!(parseFloat(s.config.titleFont) > 0)) s.config.titleFont = 36;
-        if(!(parseFloat(s.config.nameFont) > 0)) s.config.nameFont = 18;
-        delete s.config.scaleMode;
-        s.persons.forEach(p=>{
-          if(!("bioFont" in p)) p.bioFont = null;
-        });
-        return s;
-      }
-    }
-  }catch(e){}
-  return JSON.parse(JSON.stringify(SAMPLE));
+      if(s && Array.isArray(s.persons)) return normalizeState(s);
+    }catch(e){}
+  }
+  return normalizeState(JSON.parse(JSON.stringify(SAMPLE)));
 }
 function save(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+  clearTimeout(saveTimer); saveTimer = null;
+  const ok = store.set(STORE_KEY, JSON.stringify(state));
+  if(!ok && Date.now() - lastQuotaWarn > 30000){
+    lastQuotaWarn = Date.now();
+    alert("本地存储空间不足，草稿未能保存。请先「导出数据」备份，再减少照片或历史版本。");
+  }
+  return ok;
 }
+function saveSoon(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 400);
+}
+function renderPreviewSoon(){
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(renderPreview, 150);
+}
+window.addEventListener("beforeunload", ()=>{ if(saveTimer) save(); });
 
 /* ==================== 工具函数 ==================== */
-function esc(str){
-  return String(str==null?"":str).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
 function bioParagraphs(bio){
   return String(bio||"").split(/\n+/).map(s=>s.trim()).filter(Boolean);
 }
 function personTitle(person){
-  const t = person.title && person.title.trim();
+  const t = person && typeof person.title === "string" ? person.title.trim() : "";
   return t || state.config.honorTitle || "";
 }
 function fullTitle(person){
   const c = state.config.className ? state.config.className.trim() : "";
   const h = personTitle(person);
   return [c, h].filter(Boolean).join(" ");
+}
+function syncDocTitle(){
+  const parts = [state.config.className, state.config.honorTitle, state.config.period].filter(Boolean);
+  document.title = parts.length ? `班级之星-${parts.join("-")}` : "班级之星 A4 打印工具";
 }
 
 /* ==================== 编辑面板渲染 ==================== */
@@ -420,13 +598,13 @@ function renderEditor(){
         </span>
       </div>
       <div class="field-row">
-        <div class="field"><label>姓名</label><input type="text" data-f="name" value="${esc(p.name)}"></div>
-        <div class="field"><label>职务</label><input type="text" data-f="role" placeholder="多个职务用顿号分隔" value="${esc(p.role)}"></div>
+        <div class="field"><label>姓名</label><input type="text" data-f="name" aria-label="姓名" value="${esc(p.name)}"></div>
+        <div class="field"><label>职务</label><input type="text" data-f="role" aria-label="职务" placeholder="多个职务用顿号分隔" value="${esc(p.role)}"></div>
       </div>
       <div class="field-row">
         <div class="field">
           <label>简介字号</label>
-          <select data-f="bioFont">
+          <select data-f="bioFont" aria-label="简介字号">
             <option value="" ${p.bioFont==null?"selected":""}>跟随全局（${state.config.bioFont} pt）</option>
             ${[10.5,11,11.5,12,12.5,13,14].map(f=>`<option value="${f}" ${Number(p.bioFont)===f?"selected":""}>${f} pt</option>`).join("")}
           </select>
@@ -434,12 +612,12 @@ function renderEditor(){
       </div>
       <div class="field">
         <label>称号覆写（留空用全局）</label>
-        <input type="text" data-f="title" placeholder="留空则使用上方全局称号" value="${esc(p.title)}">
+        <input type="text" data-f="title" aria-label="称号覆写" placeholder="留空则使用上方全局称号" value="${esc(p.title)}">
       </div>
       <div class="photo-box">
         ${p.photo
-          ? `<img class="photo-thumb" src="${p.photo}" alt="照片" data-act="photo" title="点击更换照片" style="cursor:pointer">`
-          : `<div class="photo-thumb empty" data-act="photo" title="点击选择本地照片" style="cursor:pointer">照片位</div>`}
+          ? `<img class="photo-thumb" src="${esc(p.photo)}" alt="照片" data-act="photo" title="点击更换照片" style="cursor:pointer" role="button" tabindex="0">`
+          : `<div class="photo-thumb empty" data-act="photo" title="点击选择本地照片" style="cursor:pointer" role="button" tabindex="0">照片位</div>`}
         <div class="photo-ops">
           <button data-act="photo">${p.photo ? "更换照片" : "选择本地照片"}</button>
           ${p.photo ? `<button data-act="photoDel">移除照片</button>` : ""}
@@ -447,7 +625,7 @@ function renderEditor(){
       </div>
       <div class="field">
         <label>简介（多行分段）</label>
-        <textarea data-f="bio" rows="5">${esc(p.bio)}</textarea>
+        <textarea data-f="bio" aria-label="简介" rows="5">${esc(p.bio)}</textarea>
       </div>`;
     list.appendChild(item);
   });
@@ -460,11 +638,11 @@ function renderEditor(){
       const p = state.persons.find(x=>x.id===id);
       if(!p) return;
       if(el.dataset.f === "bioFont"){
-        p.bioFont = el.value === "" ? null : parseFloat(el.value);
+        p.bioFont = el.value === "" ? null : safeFont(el.value, 12, 10.5, 14);
       }else{
         p[el.dataset.f] = el.value;
       }
-      save(); renderPreview(); updateStat();
+      saveSoon(); renderPreviewSoon(); updateStat();
     });
   });
   // 操作按钮（含缩略图、照片操作、排序复制删除）
@@ -473,14 +651,25 @@ function renderEditor(){
       const id = el.closest(".person-item").dataset.id;
       const idx = state.persons.findIndex(x=>x.id===id);
       const act = el.dataset.act;
+      if(idx < 0) return;
       if(act==="up" && idx>0){ swap(idx,idx-1); }
       else if(act==="down" && idx<state.persons.length-1){ swap(idx,idx+1); }
       else if(act==="copy"){ duplicate(idx); }
-      else if(act==="del"){ state.persons.splice(idx,1); }
+      else if(act==="del"){
+        const p = state.persons[idx];
+        if(!confirm(`确定删除「${p && p.name ? p.name : "该人物"}」？`)) return;
+        state.persons.splice(idx,1);
+      }
       else if(act==="photo"){ pickPhoto(id); return; }
       else if(act==="photoDel"){ const p=state.persons[idx]; p.photo=""; }
       save(); renderEditor(); renderPreview(); updateStat();
     });
+  });
+  // 键盘可操作：照片位等非 button 元素支持 Enter / Space
+  list.addEventListener("keydown", e=>{
+    const el = e.target.closest("[data-act]");
+    if(!el || el.tagName === "BUTTON") return;
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); el.click(); }
   });
 }
 
@@ -494,13 +683,21 @@ function duplicate(idx){
 
 /* ==================== 照片处理 ==================== */
 let pendingPhotoId = null;
+let pendingPhotoTimer = null;
+function clearPendingPhoto(){
+  pendingPhotoId = null;
+  clearTimeout(pendingPhotoTimer);
+}
 function pickPhoto(id){
   pendingPhotoId = id;
+  clearTimeout(pendingPhotoTimer);
+  // 打开选择框后若长时间没有操作，自动失效，避免之后误粘贴
+  pendingPhotoTimer = setTimeout(clearPendingPhoto, 120000);
   const inp = document.createElement("input");
   inp.type = "file"; inp.accept = "image/*";
   inp.addEventListener("change", ()=>{
     const f = inp.files[0];
-    if(f) readPhoto(f, id);
+    if(f) readPhoto(f, id); else clearPendingPhoto();
   });
   inp.click();
 }
@@ -509,7 +706,7 @@ function readPhoto(file, id){
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      const maxSide = 800;
+      const maxSide = PHOTO_MAX_SIDE;
       let w = img.width, h = img.height;
       if(Math.max(w,h) > maxSide){
         const k = maxSide / Math.max(w,h);
@@ -521,12 +718,15 @@ function readPhoto(file, id){
       const data = cv.toDataURL("image/jpeg", .85);
       const p = state.persons.find(x=>x.id===id);
       if(p){ p.photo = data; save(); renderEditor(); renderPreview(); }
+      clearPendingPhoto();
     };
+    img.onerror = ()=>{ alert("照片读取失败，请换一张图片重试。"); clearPendingPhoto(); };
     img.src = e.target.result;
   };
+  reader.onerror = ()=>{ alert("照片读取失败，请换一张图片重试。"); clearPendingPhoto(); };
   reader.readAsDataURL(file);
 }
-// 粘贴照片
+// 粘贴照片：仅在刚点过照片位时生效
 document.addEventListener("paste", e=>{
   if(!pendingPhotoId) return;
   const items = e.clipboardData && e.clipboardData.items;
@@ -544,11 +744,12 @@ document.addEventListener("paste", e=>{
 function renderPreview(){
   const box = document.getElementById("preview");
   box.innerHTML = "";
+  syncDocTitle();
   const persons = state.persons;
   if(persons.length === 0){
     const empty = document.createElement("div");
     empty.className = "sheet sheet-empty";
-    empty.textContent = "请在左侧添加人物；打印时本空页不会输出。";
+    empty.textContent = "请在左侧添加人物后再打印。";
     box.appendChild(empty);
     return;
   }
@@ -556,8 +757,10 @@ function renderPreview(){
   const pages = [];
   for(let i=0;i<persons.length;i+=2){ pages.push(persons.slice(i,i+2)); }
 
-  const personEls = []; // { person, el, bio, photoEl, page, step, steps, overflow }
-  const bioColor = (state.config.bioColor && state.config.bioColor !== "gradient") ? state.config.bioColor : "#000000";
+  const personEls = []; // { person, el, titleEl, bio, photoEl, page, step, steps, overflow }
+  const bioColor = safeColor(state.config.bioColor, "#000000");
+  const titleFont = safeFont(state.config.titleFont, 36, 28, 42);
+  const nameFont = safeFont(state.config.nameFont, 18, 14, 22);
 
   pages.forEach((page, pi)=>{
     const sheet = document.createElement("div");
@@ -568,17 +771,17 @@ function renderPreview(){
       const title = fullTitle(p);
       const bioHtml = bioParagraphs(p.bio).map(t=>`<p>${esc(t)}</p>`).join("");
       const photoInner = p.photo
-        ? `<img src="${p.photo}" alt="照片">`
+        ? `<img src="${esc(p.photo)}" alt="照片">`
         : `<div class="ph-empty" style="height:75.7mm">照片位</div>`;
       // 单人字号优先，留空则跟随全局
       const stepList = buildSteps(p.bioFont != null ? p.bioFont : state.config.bioFont);
       el.innerHTML = `
-        <div class="p-title" style="font-size:${state.config.titleFont}pt">${esc(title)}</div>
-        <div class="p-name" style="font-size:${state.config.nameFont}pt"><b>${esc(p.name)}</b>${p.role?`<span class="role">（${esc(p.role)}）</span>`:""}</div>
+        <div class="p-title" style="font-size:${titleFont}pt">${esc(title)}</div>
+        <div class="p-name" style="font-size:${nameFont}pt"><b>${esc(p.name)}</b>${p.role?`<span class="role">（${esc(p.role)}）</span>`:""}</div>
         <div class="p-photo">${photoInner}</div>
         <div class="p-bio" style="color:${bioColor}">${bioHtml}</div>`;
       sheet.appendChild(el);
-      personEls.push({ person:p, el, bio: el.querySelector(".p-bio"), photoEl: el.querySelector(".p-photo"), page: pi, step: 0, steps: stepList, overflow:false });
+      personEls.push({ person:p, el, titleEl: el.querySelector(".p-title"), bio: el.querySelector(".p-bio"), photoEl: el.querySelector(".p-photo"), page: pi, step: 0, steps: stepList, overflow:false });
     });
     // 第二格留白（奇数人）
     if(page.length===1){
@@ -589,7 +792,24 @@ function renderPreview(){
     box.appendChild(sheet);
   });
 
+  fitTitles(personEls);
   applySteps(personEls);
+}
+
+/* 标题过长时先逐级降字号，仍放不下则允许换行（最低 22pt） */
+function fitTitles(list){
+  list.forEach(pe=>{
+    const el = pe.titleEl;
+    if(!el || !el.textContent.trim()) return;
+    let pt = safeFont(state.config.titleFont, 36, TITLE_FONT_MIN, 60);
+    el.classList.remove("wrap");
+    el.style.fontSize = pt + "pt";
+    while(pt > TITLE_FONT_MIN && el.scrollWidth > el.clientWidth + 1){
+      pt -= 1;
+      el.style.fontSize = pt + "pt";
+    }
+    if(el.scrollWidth > el.clientWidth + 1) el.classList.add("wrap");
+  });
 }
 
 /* 测量并确定档位：能放下就用本人设定字号，放不下才逐级缩小；各人独立 */
@@ -626,13 +846,14 @@ function addNote(pe){
 /* ==================== 统计与工具栏 ==================== */
 function updateStat(){
   const n = state.persons.length;
-  const pages = Math.max(1, Math.ceil(n/2));
+  const pages = n ? Math.ceil(n/2) : 0;
   document.getElementById("statHint").textContent = `${n} 人 · ${pages} 页`;
 }
 
 document.getElementById("btnAdd").addEventListener("click", ()=>{
+  if(state.persons.length >= MAX_PERSONS){ alert(`最多支持 ${MAX_PERSONS} 位人物。`); return; }
   const p = JSON.parse(JSON.stringify(DRAFT_PERSON));
-  p.id = uid();
+  p.id = uid(); p.bioFont = null;
   state.persons.push(p);
   save(); renderEditor(); renderPreview(); updateStat();
   // 滚动到新增条目，并选中姓名框便于直接改写
@@ -644,56 +865,61 @@ document.getElementById("btnAdd").addEventListener("click", ()=>{
   }
 });
 document.getElementById("btnClear").addEventListener("click", ()=>{
-  if(!confirm("确定清空全部人物与设置？此操作不可恢复。")) return;
-  state = JSON.parse(JSON.stringify(SAMPLE));
-  state.persons = [];
-  save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
+  if(!confirm("确定清空全部人物、设置与本地历史版本？此操作不可恢复，建议先导出数据备份。")) return;
+  state = normalizeState({ config:{}, persons: [] });
+  store.set(HISTORY_KEY, "[]");
+  store.set(PHOTO_KEY, "{}");
+  clearPendingPhoto();
+  save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat(); renderHistory();
 });
-document.getElementById("btnPrint").addEventListener("click", ()=>{ window.print(); });
+document.getElementById("btnPrint").addEventListener("click", ()=>{
+  if(!state.persons.length){ alert("请先在左侧添加人物，再打印。"); return; }
+  window.print();
+});
 
 /* 全局设置输入 */
 function syncConfigInputs(){
   document.getElementById("cfgClass").value = state.config.className || "";
   document.getElementById("cfgTitle").value = state.config.honorTitle || "";
   document.getElementById("cfgPeriod").value = state.config.period || "";
-  document.getElementById("cfgBioFont").value = String(state.config.bioFont || BIO_FONT_DEFAULT);
-  document.getElementById("cfgTitleFont").value = String(state.config.titleFont || 36);
-  document.getElementById("cfgNameFont").value = String(state.config.nameFont || 18);
+  document.getElementById("cfgBioFont").value = String(safeFont(state.config.bioFont, BIO_FONT_DEFAULT, 10.5, 14));
+  document.getElementById("cfgTitleFont").value = String(safeFont(state.config.titleFont, 36, 28, 42));
+  document.getElementById("cfgNameFont").value = String(safeFont(state.config.nameFont, 18, 14, 22));
   const sel = document.getElementById("cfgBioColor");
   const picker = document.getElementById("cfgBioColorPicker");
-  const c = (state.config.bioColor && state.config.bioColor !== "gradient") ? state.config.bioColor : "#000000";
-  sel.value = ["#000000","#1f2329","#c8202a","#17518f"].includes(c) ? c : "custom";
-  picker.value = c;
+  const c = safeColor(state.config.bioColor, "#000000");
+  sel.value = ["#000000","#1f2329","#c8202a","#17518f"].includes(c.toLowerCase()) ? c : "custom";
+  picker.value = hexForPicker(c);
 }
 [["cfgClass","className"],["cfgTitle","honorTitle"],["cfgPeriod","period"]].forEach(([id,key])=>{
   document.getElementById(id).addEventListener("input", e=>{
-    state.config[key] = e.target.value; save(); renderPreview();
+    state.config[key] = e.target.value; saveSoon(); renderPreviewSoon();
   });
 });
 document.getElementById("cfgBioFont").addEventListener("change", e=>{
-  state.config.bioFont = parseFloat(e.target.value) || BIO_FONT_DEFAULT;
+  state.config.bioFont = safeFont(e.target.value, BIO_FONT_DEFAULT, 10.5, 14);
   save(); renderEditor(); renderPreview();
 });
 document.getElementById("cfgTitleFont").addEventListener("change", e=>{
-  state.config.titleFont = parseFloat(e.target.value) || 36;
+  state.config.titleFont = safeFont(e.target.value, 36, 28, 42);
   save(); renderPreview();
 });
 document.getElementById("cfgNameFont").addEventListener("change", e=>{
-  state.config.nameFont = parseFloat(e.target.value) || 18;
+  state.config.nameFont = safeFont(e.target.value, 18, 14, 22);
   save(); renderPreview();
 });
 document.getElementById("cfgBioColor").addEventListener("change", e=>{
   const v = e.target.value;
   if(v === "custom"){
-    state.config.bioColor = document.getElementById("cfgBioColorPicker").value || "#000000";
+    state.config.bioColor = safeColor(document.getElementById("cfgBioColorPicker").value, "#000000");
   }else{
-    state.config.bioColor = v;
-    document.getElementById("cfgBioColorPicker").value = v;
+    state.config.bioColor = safeColor(v, "#000000");
+    document.getElementById("cfgBioColorPicker").value = hexForPicker(state.config.bioColor);
   }
   save(); renderPreview();
 });
 document.getElementById("cfgBioColorPicker").addEventListener("input", e=>{
-  state.config.bioColor = e.target.value;
+  state.config.bioColor = safeColor(e.target.value, "#000000");
   document.getElementById("cfgBioColor").value = "custom";
   save(); renderPreview();
 });
@@ -706,69 +932,138 @@ document.getElementById("scaleSel").addEventListener("change", e=>{
   else{ fitWidth(inner); }
 });
 function fitWidth(inner){
-  const avail = inner.parentElement.clientWidth - 20;
+  const host = inner.parentElement;
+  const cs = getComputedStyle(host);
+  const avail = host.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0) - 2;
   const paperW = 297 * 3.7795; // mm -> px @96dpi
-  const k = Math.min(1, avail / paperW);
+  const k = Math.min(1, Math.max(0.1, avail / paperW));
   inner.style.setProperty("--scale", k.toFixed(3));
   // 缩放后按视觉高度回收占位，避免右侧滚动条出现大片空白
   const rawH = inner.offsetHeight;
   inner.style.marginBottom = k < 1 ? (-(rawH * (1 - k)).toFixed(0) + "px") : "0px";
 }
+let resizeTimer = null;
 window.addEventListener("resize", ()=>{
-  if(document.getElementById("scaleSel").value === "fit") fitWidth(document.getElementById("preview"));
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    if(document.getElementById("scaleSel").value === "fit") fitWidth(document.getElementById("preview"));
+  }, 120);
 });
 
 /* 导入 / 导出 JSON */
 document.getElementById("btnExport").addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `班级之星-${state.config.period||"数据"}.json`;
+  const href = URL.createObjectURL(blob);
+  a.href = href;
+  const base = [state.config.className, state.config.honorTitle, state.config.period].filter(Boolean).join("-") || "数据";
+  a.download = `班级之星-${base.replace(/[\\/:*?"<>|]/g, "_").slice(0,60)}.json`;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(a.href);
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(href), 1000);
 });
 document.getElementById("btnImport").addEventListener("click", ()=>{
   document.getElementById("importFile").click();
 });
 document.getElementById("importFile").addEventListener("change", e=>{
   const f = e.target.files[0];
+  e.target.value = "";
   if(!f) return;
   const reader = new FileReader();
   reader.onload = ev=>{
-    try{
-      const s = JSON.parse(ev.target.result);
-      if(s && Array.isArray(s.persons)){
-        state = s;
-        save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
-      }else{ alert("文件格式不正确：缺少 persons 列表"); }
-    }catch(err){ alert("导入失败：不是有效的 JSON 文件"); }
+    let s;
+    try{ s = JSON.parse(ev.target.result); }
+    catch(err){ alert("导入失败：不是有效的 JSON 文件"); return; }
+    if(!s || !Array.isArray(s.persons)){ alert("文件格式不正确：缺少 persons 列表"); return; }
+    const next = normalizeState(s);
+    if(!confirm(`将导入 ${next.persons.length} 位人物并覆盖当前内容。当前内容会先自动存为一条历史版本，是否继续？`)) return;
+    try{ pushHistory("导入前自动备份"); }catch(err){}
+    state = next;
+    save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
   };
+  reader.onerror = ()=>alert("文件读取失败，请重试。");
   reader.readAsText(f);
-  e.target.value = "";
 });
 
 /* ==================== 本地历史版本 ==================== */
-const HISTORY_KEY = "class_star_history_v1";
-const HISTORY_LIMIT = 20;
-
 function loadHistory(){
-  try{
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if(raw){ const a = JSON.parse(raw); if(Array.isArray(a)) return a; }
-  }catch(e){}
+  const raw = store.get(HISTORY_KEY);
+  if(raw){
+    try{ const a = JSON.parse(raw); if(Array.isArray(a)) return a; }catch(e){}
+  }
   return [];
 }
 function persistHistory(list){
-  try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
-  catch(e){ alert("本地存储空间不足，历史保存失败。建议减少照片，或先导出 JSON 备份。"); throw e; }
+  if(!store.set(HISTORY_KEY, JSON.stringify(list))){
+    alert("本地存储空间不足，历史保存失败。建议减少照片，或先导出 JSON 备份。");
+    throw new Error("history-quota");
+  }
+}
+function photoHash(data){
+  let h = 2166136261;
+  for(let i=0;i<data.length;i++){ h ^= data.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h>>>0).toString(36) + "-" + data.length.toString(36);
+}
+function loadPhotoMap(){
+  const raw = store.get(PHOTO_KEY);
+  if(raw){ try{ const o = JSON.parse(raw); if(o && typeof o === "object") return o; }catch(e){} }
+  return {};
+}
+function savePhotoMap(map){ store.set(PHOTO_KEY, JSON.stringify(map)); }
+/* 历史快照里的照片改为引用，避免同一张照片被复制 20 份 */
+function packSnapshot(src){
+  const map = loadPhotoMap();
+  const copy = JSON.parse(JSON.stringify(src));
+  (copy.persons || []).forEach(p=>{
+    if(typeof p.photo === "string" && p.photo.startsWith("data:")){
+      const k = photoHash(p.photo);
+      map[k] = p.photo;
+      p.photo = "@ref:" + k;
+    }
+  });
+  savePhotoMap(map);
+  return copy;
+}
+function unpackSnapshot(src){
+  const map = loadPhotoMap();
+  const copy = JSON.parse(JSON.stringify(src));
+  (copy.persons || []).forEach(p=>{
+    if(typeof p.photo === "string" && p.photo.startsWith("@ref:")){
+      p.photo = map[p.photo.slice(5)] || "";
+    }
+  });
+  return copy;
+}
+function prunePhotos(){
+  const used = new Set();
+  const scan = s => {
+    if(s && Array.isArray(s.persons)) s.persons.forEach(p=>{
+      if(p && typeof p.photo === "string" && p.photo.startsWith("@ref:")) used.add(p.photo.slice(5));
+    });
+  };
+  scan(state);
+  loadHistory().forEach(h=>scan(h.snapshot));
+  const map = loadPhotoMap();
+  let changed = false;
+  Object.keys(map).forEach(k=>{ if(!used.has(k)){ delete map[k]; changed = true; } });
+  if(changed) savePhotoMap(map);
+}
+function pushHistory(label){
+  const list = loadHistory();
+  list.push({ id: uid(), savedAt: Date.now(), label: safeText(label, 40), snapshot: packSnapshot(state) });
+  while(list.length > HISTORY_LIMIT) list.shift();
+  persistHistory(list);
+  prunePhotos();
 }
 function historyName(h){
-  const c = (h.snapshot && h.snapshot.config) || {};
-  const base = [c.className, c.honorTitle, c.period].filter(Boolean).join(" ");
-  return h.label || base || "未命名版本";
+  const c = (h && h.snapshot && h.snapshot.config) || {};
+  const base = [safeText(c.className,40), safeText(c.honorTitle,40), safeText(c.period,40)].filter(Boolean).join(" ");
+  return safeText(h && h.label, 40) || base || "未命名版本";
 }
 function fmtTime(ts){
   const d = new Date(ts);
+  if(!ts || isNaN(d.getTime())) return "未知时间";
   const p = n => String(n).padStart(2,"0");
   return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
@@ -786,10 +1081,10 @@ function renderHistory(){
     const n = (h.snapshot && Array.isArray(h.snapshot.persons)) ? h.snapshot.persons.length : 0;
     item.innerHTML = `
       <div class="hi-name">${esc(historyName(h))}</div>
-      <div class="hi-meta">${fmtTime(h.savedAt)} · ${n} 人</div>
+      <div class="hi-meta">${esc(fmtTime(h.savedAt))} · ${n} 人</div>
       <div class="hi-actions">
-        <button data-hi="load" data-id="${h.id}">载入</button>
-        <button class="del" data-hi="del" data-id="${h.id}">删除</button>
+        <button data-hi="load" data-id="${esc(h.id)}">载入</button>
+        <button class="del" data-hi="del" data-id="${esc(h.id)}">删除</button>
       </div>`;
     box.appendChild(item);
   });
@@ -803,38 +1098,40 @@ function renderHistory(){
 }
 function saveHistoryCurrent(){
   const label = document.getElementById("histLabel").value.trim();
-  const list = loadHistory();
-  list.push({ id: uid(), savedAt: Date.now(), label, snapshot: JSON.parse(JSON.stringify(state)) });
-  while(list.length > HISTORY_LIMIT) list.shift();
-  persistHistory(list);
+  try{ pushHistory(label); }catch(e){ return; }
   document.getElementById("histLabel").value = "";
   renderHistory();
 }
 function loadHistoryItem(id){
   const h = loadHistory().find(x=>x.id===id);
-  if(!h) return;
+  if(!h || !h.snapshot) return;
   if(!confirm("载入该版本将覆盖当前编辑内容，是否继续？")) return;
-  state = JSON.parse(JSON.stringify(h.snapshot));
-  state.config = state.config || {};
-  state.persons = Array.isArray(state.persons) ? state.persons : [];
+  state = normalizeState(unpackSnapshot(h.snapshot));
   save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
 }
 function deleteHistoryItem(id){
   if(!confirm("确定删除这条历史版本？")) return;
   persistHistory(loadHistory().filter(x=>x.id!==id));
+  prunePhotos();
   renderHistory();
 }
 document.getElementById("btnSaveHistory").addEventListener("click", saveHistoryCurrent);
 
 /* ==================== 左栏宽度拖拽 ==================== */
-const RESIZE_KEY = "class_star_layout_v1";
 const resizer = document.getElementById("resizer");
 const editorEl = document.querySelector(".editor");
 let drag = null;
 
+function setEditorWidth(w){
+  const min = 280, max = Math.max(min, window.innerWidth * 0.6);
+  const next = Math.min(max, Math.max(min, w));
+  editorEl.style.width = next + "px";
+  fitWidth(document.getElementById("preview"));
+  return next;
+}
 function loadLayoutWidth(){
-  const w = parseFloat(localStorage.getItem(RESIZE_KEY));
-  if(w && w > 260) editorEl.style.width = w + "px";
+  const w = parseFloat(store.get(RESIZE_KEY));
+  if(w && w > 260) editorEl.style.width = Math.min(w, window.innerWidth * 0.6) + "px";
 }
 resizer.addEventListener("pointerdown", e=>{
   drag = { x: e.clientX, w: editorEl.getBoundingClientRect().width };
@@ -845,21 +1142,41 @@ resizer.addEventListener("pointerdown", e=>{
 });
 resizer.addEventListener("pointermove", e=>{
   if(!drag) return;
-  const min = 280, max = window.innerWidth * 0.6;
-  const w = Math.min(max, Math.max(min, drag.w + (e.clientX - drag.x)));
-  editorEl.style.width = w + "px";
-  fitWidth(document.getElementById("preview"));
+  setEditorWidth(drag.w + (e.clientX - drag.x));
 });
 function endDrag(){
   if(!drag) return;
   drag = null;
   resizer.classList.remove("active");
   document.body.classList.remove("resizing");
-  try{ localStorage.setItem(RESIZE_KEY, editorEl.getBoundingClientRect().width); }catch(_){}
+  store.set(RESIZE_KEY, editorEl.getBoundingClientRect().width);
   fitWidth(document.getElementById("preview"));
 }
 resizer.addEventListener("pointerup", endDrag);
 resizer.addEventListener("pointercancel", endDrag);
+resizer.addEventListener("keydown", e=>{
+  if(e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  e.preventDefault();
+  const next = setEditorWidth(editorEl.getBoundingClientRect().width + (e.key === "ArrowRight" ? 24 : -24));
+  store.set(RESIZE_KEY, next);
+});
+
+/* ==================== 使用说明折叠 ==================== */
+const guideBox = document.getElementById("guideBox");
+const btnGuide = document.getElementById("btnGuide");
+function applyGuide(open){
+  guideBox.hidden = !open;
+  btnGuide.classList.toggle("active", open);
+  btnGuide.setAttribute("aria-expanded", open ? "true" : "false");
+  store.set(GUIDE_KEY, open ? "open" : "closed");
+}
+btnGuide.addEventListener("click", ()=>applyGuide(guideBox.hidden));
+document.getElementById("btnGuideClose").addEventListener("click", ()=>applyGuide(false));
+let guideOpen = true;
+const savedGuide = store.get(GUIDE_KEY);
+if(savedGuide === "closed") guideOpen = false;
+else if(savedGuide === null && window.innerWidth <= 640) guideOpen = false;
+applyGuide(guideOpen);
 
 /* ==================== 初始化 ==================== */
 loadLayoutWidth();
