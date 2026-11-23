@@ -45,7 +45,67 @@ input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink)}
 .btn.danger:hover{border-color:#d83931;color:#d83931}
 .toolbar select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
 .toolbar .hint{color:var(--muted);font-size:12px}
+
+/* ===== 微信内使用提示 ===== */
+.wx-bar{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:#fff8e6;border-bottom:1px solid #f0d9a8;color:#7a4b00;
+  padding:10px 16px;font-size:13px;line-height:1.5;
+}
+.wx-bar[hidden]{display:none}
+.wx-bar .wx-bar-text{flex:1 1 220px;min-width:0}
+.wx-bar button{
+  border:1px solid #e0bf80;background:#fff;border-radius:6px;padding:4px 10px;
+  font-size:12px;color:#7a4b00;white-space:nowrap;
+}
+.wx-bar button:hover{border-color:#c99a3d}
+.wx-mask{
+  position:fixed;inset:0;z-index:200;background:rgba(20,22,26,.45);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.wx-mask[hidden]{display:none}
+.wx-dialog{
+  width:100%;max-width:440px;max-height:90vh;overflow:auto;background:#fff;border-radius:14px;padding:20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+}
+.wx-dialog h3{font-size:16px;margin-bottom:10px}
+.wx-dialog p{font-size:13px;line-height:1.7;color:var(--muted);margin-bottom:8px}
+.wx-dialog ol{margin:0 0 10px 18px;padding:0;font-size:13px;line-height:1.8;color:var(--ink)}
+.wx-dialog .wx-note{font-size:12px;color:#b25e00;background:#fff8e6;border-radius:8px;padding:8px 10px;margin-bottom:14px}
+.wx-dialog .wx-actions{display:flex;justify-content:flex-end;gap:8px}
+.wx-dialog .wx-actions button{
+  border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;font-size:13px;
+}
+.wx-dialog .wx-actions .primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.data-dialog textarea{
+  width:100%;height:180px;resize:vertical;border:1px solid var(--line);border-radius:8px;
+  padding:10px;font-size:12px;line-height:1.5;background:#fafbfc;color:var(--ink);
+  font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace;
+}
+.data-dialog .data-hint{font-size:12px;color:var(--muted);margin:8px 0 14px;line-height:1.5;word-break:break-all}
+.data-dialog .data-mode{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 0;font-size:13px}
+.data-dialog .data-mode[hidden]{display:none}
+.data-dialog .data-mode label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.data-dialog .data-mode input{margin:0}
+
 .btn.active{border-color:var(--brand);color:var(--brand);background:var(--brand-soft,#fdecee)}
+
+/* ===== 数据菜单 ===== */
+.menu-wrap{position:relative;display:inline-flex}
+.menu{
+  position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:184px;
+  background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;
+  box-shadow:0 12px 30px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:2px;
+}
+.menu[hidden]{display:none}
+.menu button{
+  border:0;background:transparent;border-radius:6px;padding:9px 10px;text-align:left;
+  font-size:13px;color:var(--ink);white-space:nowrap;
+}
+.menu button:hover{background:#f4f5f7;color:var(--brand)}
+.menu button.danger{color:#d83931}
+.menu button.danger:hover{background:#fdeceb;color:#d83931}
+.menu-sep{height:1px;background:var(--line);margin:4px 2px}
 
 /* ===== 顶部使用说明（可折叠） ===== */
 .guide{
@@ -216,7 +276,7 @@ body.resizing{user-select:none;cursor:col-resize}
 @page{size:A4 landscape;margin:0}
 @media print{
   body{background:#fff;display:block;height:auto;overflow:visible}
-  .toolbar,.editor,.preview-controls,.guide{display:none !important}
+  .toolbar,.editor,.preview-controls,.guide,.wx-bar,.wx-mask,.menu{display:none !important}
   .preview{padding:0;overflow:visible}
   .preview-inner{--scale:1 !important;transform:none;gap:0;align-items:stretch;margin-bottom:0 !important}
   .sheet{box-shadow:none;margin:0;width:297mm;height:210mm}
@@ -235,9 +295,17 @@ body.resizing{user-select:none;cursor:col-resize}
   <h1>班级之星 A4 打印工具</h1>
   <button class="btn primary" id="btnPrint">打印 / 导出 PDF</button>
   <button class="btn" id="btnGuide">使用说明</button>
-  <button class="btn" id="btnExport">导出数据</button>
-  <button class="btn" id="btnImport">导入数据</button>
-  <button class="btn danger" id="btnClear">清空全部</button>
+  <div class="menu-wrap" id="dataMenuWrap">
+    <button class="btn" id="btnDataMenu" aria-haspopup="menu" aria-expanded="false" aria-controls="dataMenu">数据 ▾</button>
+    <div class="menu" id="dataMenu" role="menu" hidden>
+      <button role="menuitem" id="btnExport">导出为文件（JSON）</button>
+      <button role="menuitem" id="btnCopy">复制数据</button>
+      <button role="menuitem" id="btnImport">从文件导入（JSON）</button>
+      <button role="menuitem" id="btnPasteImport">粘贴导入</button>
+      <div class="menu-sep" role="separator"></div>
+      <button role="menuitem" id="btnClear" class="danger">清空全部</button>
+    </div>
+  </div>
   <span class="spacer"></span>
   <label class="hint">预览缩放</label>
   <select id="scaleSel" aria-label="预览缩放">
@@ -245,6 +313,46 @@ body.resizing{user-select:none;cursor:col-resize}
     <option value="1">100%</option>
   </select>
   <span class="hint" id="statHint" aria-live="polite"></span>
+</div>
+
+<!-- ===== 微信内使用提示 ===== -->
+<div class="wx-bar" id="wxBar" hidden>
+  <span class="wx-bar-text">检测到你在微信内打开：微信内置浏览器不支持网页打印和文件下载。请点右上角「…」→「在浏览器打开」，或改用电脑 Chrome / Edge。</span>
+  <button id="wxBarClose">知道了</button>
+</div>
+
+<div class="wx-mask" id="wxMask" hidden>
+  <div class="wx-dialog" role="dialog" aria-modal="true" aria-labelledby="wxTitle" aria-describedby="wxDesc">
+    <h3 id="wxTitle">请在浏览器中打印或导出</h3>
+    <p id="wxDesc">微信内置浏览器不提供网页打印和文件下载能力，所以「打印 / 导出 PDF」和「导出数据」在微信里无法工作。</p>
+    <ol>
+      <li>点右上角「…」</li>
+      <li>选择「在浏览器打开」</li>
+      <li>在浏览器里重新打开本页，再打印或导出</li>
+    </ol>
+    <div class="wx-note">微信与其他浏览器的本地数据不互通。如需把内容带到浏览器：先点「复制数据文本」，在浏览器里用「粘贴导入」恢复；也可以直接在电脑 Chrome / Edge 中填写并打印。</div>
+    <div class="wx-actions">
+      <button id="wxCopy">复制数据文本</button>
+      <button id="wxClose" class="primary">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 数据迁移弹窗 ===== -->
+<div class="wx-mask" id="dataMask" hidden>
+  <div class="wx-dialog data-dialog" role="dialog" aria-modal="true" aria-labelledby="dataTitle">
+    <h3 id="dataTitle">复制数据文本</h3>
+    <textarea id="dataText" spellcheck="false" aria-label="数据文本"></textarea>
+    <div class="data-mode" id="dataModeRow" role="radiogroup" aria-label="导入方式" hidden>
+      <label><input type="radio" name="importMode" id="importModeOverwrite" value="overwrite" checked> 覆盖导入（替换当前内容）</label>
+      <label><input type="radio" name="importMode" id="importModeAppend" value="append"> 追加导入（保留当前，接到末尾）</label>
+    </div>
+    <div class="data-hint" id="dataHint"></div>
+    <div class="wx-actions">
+      <button id="dataCancel">关闭</button>
+      <button id="dataAction" class="primary">复制</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===== 顶部使用说明 ===== -->
@@ -872,8 +980,190 @@ document.getElementById("btnClear").addEventListener("click", ()=>{
   clearPendingPhoto();
   save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat(); renderHistory();
 });
+/* ==================== 微信环境检测与引导 ==================== */
+const WX_TIP_KEY = "class_star_wx_tip_v1";
+const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+const canPrint = typeof window.print === "function";
+const canDownload = typeof URL !== "undefined" && typeof URL.createObjectURL === "function";
+
+function showWxGuide(){
+  const mask = document.getElementById("wxMask");
+  if(!mask) return;
+  mask.hidden = false;
+  const btn = document.getElementById("wxClose");
+  if(btn) btn.focus();
+}
+function hideWxGuide(){
+  const mask = document.getElementById("wxMask");
+  if(mask) mask.hidden = true;
+}
+function initWxTip(){
+  if(!isWeChat) return;
+  const bar = document.getElementById("wxBar");
+  if(!bar) return;
+  if(store.get(WX_TIP_KEY) !== "closed") bar.hidden = false;
+  const close = document.getElementById("wxBarClose");
+  if(close) close.addEventListener("click", ()=>{
+    bar.hidden = true;
+    store.set(WX_TIP_KEY, "closed");
+  });
+}
+initWxTip();
+document.getElementById("wxClose").addEventListener("click", hideWxGuide);
+document.getElementById("wxMask").addEventListener("click", e=>{
+  if(e.target.id === "wxMask") hideWxGuide();
+});
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape"){ hideWxGuide(); closeDataModal(); openDataMenu(false); }
+});
+
+/* ==================== 数据菜单 ==================== */
+const dataMenu = document.getElementById("dataMenu");
+const btnDataMenu = document.getElementById("btnDataMenu");
+function openDataMenu(open){
+  dataMenu.hidden = !open;
+  btnDataMenu.setAttribute("aria-expanded", open ? "true" : "false");
+  if(open){
+    const first = dataMenu.querySelector("button");
+    if(first) first.focus();
+  }else if(dataMenu.contains(document.activeElement)){
+    btnDataMenu.focus();
+  }
+}
+btnDataMenu.addEventListener("click", e=>{
+  e.stopPropagation();
+  openDataMenu(dataMenu.hidden);
+});
+document.addEventListener("click", e=>{
+  if(!e.target.closest("#dataMenuWrap")) openDataMenu(false);
+});
+dataMenu.addEventListener("click", e=>{
+  if(e.target.closest("button")) openDataMenu(false);
+});
+
+/* ==================== 复制数据 / 粘贴导入 ==================== */
+let dataMode = "copy";
+
+function importFromText(text, source, mode){
+  const label = source === "paste" ? "粘贴内容" : "文件";
+  const append = mode === "append";
+  let s;
+  try{ s = JSON.parse(String(text == null ? "" : text).trim()); }
+  catch(err){ alert(label + "不是有效的 JSON，请检查是否复制完整。"); return false; }
+  if(!s || !Array.isArray(s.persons)){ alert(label + "格式不正确：缺少 persons 列表。"); return false; }
+
+  if(append){
+    const incoming = normalizeState(s).persons;
+    if(!incoming.length){ alert("没有可追加的人物。"); return false; }
+    if(state.persons.length + incoming.length > MAX_PERSONS){
+      alert("追加后将超过 " + MAX_PERSONS + " 人上限（当前 " + state.persons.length + " 人，导入 " + incoming.length + " 人），请先删减后再导入。");
+      return false;
+    }
+    if(!confirm("将把 " + incoming.length + " 位人物追加到当前 " + state.persons.length + " 位之后，共 " + (state.persons.length + incoming.length) + " 位；当前班级设置保持不变。是否继续？")) return false;
+    try{ pushHistory("追加导入前自动备份"); }catch(err){}
+    incoming.forEach(p=>{ p.id = uid(); state.persons.push(p); });
+    save(); renderEditor(); renderPreview(); updateStat();
+    return true;
+  }
+
+  const next = normalizeState(s);
+  if(!confirm("将导入 " + next.persons.length + " 位人物并覆盖当前内容。当前内容会先自动存为一条历史版本，是否继续？")) return false;
+  try{ pushHistory("导入前自动备份"); }catch(err){}
+  state = next;
+  save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
+  return true;
+}
+
+async function copyText(text){
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(e){}
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.top = "-1000px";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try{ ok = document.execCommand("copy"); }catch(e){}
+  ta.remove();
+  return ok;
+}
+
+function openDataModal(mode){
+  dataMode = mode;
+  const mask = document.getElementById("dataMask");
+  const ta = document.getElementById("dataText");
+  const title = document.getElementById("dataTitle");
+  const hint = document.getElementById("dataHint");
+  const action = document.getElementById("dataAction");
+  if(mode === "copy"){
+    const text = JSON.stringify(state, null, 2);
+    title.textContent = "复制数据文本";
+    ta.readOnly = true;
+    ta.value = text;
+    ta.placeholder = "";
+    action.textContent = "复制";
+    document.getElementById("dataModeRow").hidden = true;
+    hint.textContent = "共 " + (text.length/1024).toFixed(1) + " KB（含照片）。若「复制」无效，请长按文本框全选后手动复制。";
+  }else{
+    title.textContent = "粘贴导入";
+    ta.readOnly = false;
+    ta.value = "";
+    ta.placeholder = "在此粘贴之前复制的 JSON 文本";
+    action.textContent = "导入";
+    document.getElementById("importModeOverwrite").checked = true;
+    document.getElementById("dataModeRow").hidden = false;
+    updatePasteHint();
+  }
+  mask.hidden = false;
+  ta.focus();
+  if(mode === "copy"){ try{ ta.select(); }catch(e){} }
+}
+function closeDataModal(){
+  const mask = document.getElementById("dataMask");
+  if(mask) mask.hidden = true;
+}
+function updatePasteHint(){
+  if(dataMode !== "paste") return;
+  const append = document.getElementById("importModeAppend").checked;
+  document.getElementById("dataHint").textContent = append
+    ? "保留当前人物与设置，把导入的人物追加到列表末尾；导入前会先备份当前内容。"
+    : "会覆盖当前内容，并先把当前内容存为一条历史版本。";
+}
+document.querySelectorAll('input[name="importMode"]').forEach(r=>{
+  r.addEventListener("change", updatePasteHint);
+});
+document.getElementById("btnCopy").addEventListener("click", ()=>openDataModal("copy"));
+document.getElementById("btnPasteImport").addEventListener("click", ()=>openDataModal("paste"));
+document.getElementById("dataCancel").addEventListener("click", closeDataModal);
+document.getElementById("dataMask").addEventListener("click", e=>{
+  if(e.target.id === "dataMask") closeDataModal();
+});
+document.getElementById("dataAction").addEventListener("click", async ()=>{
+  const ta = document.getElementById("dataText");
+  const hint = document.getElementById("dataHint");
+  if(dataMode === "copy"){
+    const ok = await copyText(ta.value);
+    hint.textContent = ok ? "已复制到剪贴板，可在浏览器端用「粘贴导入」恢复。" : "自动复制失败，请长按文本框全选后手动复制。";
+  }else{
+    if(!ta.value.trim()){ hint.textContent = "请先粘贴数据文本。"; return; }
+    const mode = document.getElementById("importModeAppend").checked ? "append" : "overwrite";
+    if(importFromText(ta.value, "paste", mode)) closeDataModal();
+  }
+});
+document.getElementById("wxCopy").addEventListener("click", ()=>{
+  hideWxGuide();
+  openDataModal("copy");
+});
+
 document.getElementById("btnPrint").addEventListener("click", ()=>{
   if(!state.persons.length){ alert("请先在左侧添加人物，再打印。"); return; }
+  if(isWeChat || !canPrint){ showWxGuide(); return; }
   window.print();
 });
 
@@ -952,6 +1242,7 @@ window.addEventListener("resize", ()=>{
 
 /* 导入 / 导出 JSON */
 document.getElementById("btnExport").addEventListener("click", ()=>{
+  if(isWeChat || !canDownload){ showWxGuide(); return; }
   const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   const href = URL.createObjectURL(blob);
@@ -971,17 +1262,7 @@ document.getElementById("importFile").addEventListener("change", e=>{
   e.target.value = "";
   if(!f) return;
   const reader = new FileReader();
-  reader.onload = ev=>{
-    let s;
-    try{ s = JSON.parse(ev.target.result); }
-    catch(err){ alert("导入失败：不是有效的 JSON 文件"); return; }
-    if(!s || !Array.isArray(s.persons)){ alert("文件格式不正确：缺少 persons 列表"); return; }
-    const next = normalizeState(s);
-    if(!confirm(`将导入 ${next.persons.length} 位人物并覆盖当前内容。当前内容会先自动存为一条历史版本，是否继续？`)) return;
-    try{ pushHistory("导入前自动备份"); }catch(err){}
-    state = next;
-    save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
-  };
+  reader.onload = ev=>{ importFromText(ev.target.result, "file", "overwrite"); };
   reader.onerror = ()=>alert("文件读取失败，请重试。");
   reader.readAsText(f);
 });
