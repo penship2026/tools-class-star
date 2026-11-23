@@ -162,6 +162,16 @@ body.resizing{user-select:none;cursor:col-resize}
 .editor{padding:16px 16px 40px;display:flex;flex-direction:column;gap:14px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
 .panel h2{font-size:14px;font-weight:700;margin-bottom:12px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.panel-head h2{margin-bottom:0;margin-right:auto}
+.panel-head #btnAdd{padding:4px 10px;font-size:12px;border-radius:6px}
+.panel.collapsed .panel-head{margin-bottom:0}
+.panel.collapsed .panel-body{display:none}
+.panel-toggle{
+  border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 9px;
+  font-size:12px;color:var(--muted);white-space:nowrap;
+}
+.panel-toggle:hover{border-color:var(--brand);color:var(--brand)}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;min-width:0}
 .field:last-child{margin-bottom:0}
 .field label{font-size:12px;color:var(--muted);white-space:nowrap}
@@ -183,6 +193,10 @@ body.resizing{user-select:none;cursor:col-resize}
 .person-item .pi-head .idx{font-size:12px;color:var(--muted);width:20px;flex:0 0 auto}
 .person-item .pi-head .pi-title{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .pi-actions{display:flex;gap:6px;flex-wrap:wrap}
+.pi-caret{border:0;background:transparent;color:var(--muted);font-size:13px;line-height:1;padding:3px 5px;border-radius:5px;cursor:pointer;flex:0 0 auto;margin-left:2px}
+.pi-caret:hover{background:#f1f5f9;color:var(--brand)}
+.person-item.collapsed .pi-body{display:none}
+.person-item.collapsed{padding-bottom:12px}
 .pi-actions button{
   border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:12px;color:var(--muted);
 }
@@ -303,7 +317,9 @@ body.resizing{user-select:none;cursor:col-resize}
       <button role="menuitem" id="btnImport">从文件导入（JSON）</button>
       <button role="menuitem" id="btnPasteImport">粘贴导入</button>
       <div class="menu-sep" role="separator"></div>
-      <button role="menuitem" id="btnClear" class="danger">清空全部</button>
+      <button role="menuitem" id="btnClearCurrent">清空当前（仅人物）</button>
+      <button role="menuitem" id="btnClearHistory">清空历史版本</button>
+      <button role="menuitem" id="btnClearAll" class="danger">清空全部（人物 + 历史）</button>
     </div>
   </div>
   <span class="spacer"></span>
@@ -687,13 +703,38 @@ function syncDocTitle(){
 }
 
 /* ==================== 编辑面板渲染 ==================== */
+const PERSON_COLLAPSE_KEY = "class_star_person_collapsed_v1";
+let collapsedPersons = new Set();
+try{ const raw = store.get(PERSON_COLLAPSE_KEY); if(raw) collapsedPersons = new Set(JSON.parse(raw) || []); }catch(e){ collapsedPersons = new Set(); }
+function saveCollapsedPersons(){
+  try{ store.set(PERSON_COLLAPSE_KEY, JSON.stringify([...collapsedPersons])); }catch(e){}
+}
+function togglePersonCollapsed(id, btn){
+  const item = document.querySelector('.person-item[data-id="' + id + '"]');
+  if(!item) return;
+  const next = !item.classList.contains("collapsed");
+  item.classList.toggle("collapsed", next);
+  if(next) collapsedPersons.add(id); else collapsedPersons.delete(id);
+  if(btn){
+    btn.textContent = next ? "▸" : "▾";
+    btn.setAttribute("aria-expanded", next ? "false" : "true");
+    btn.setAttribute("aria-label", next ? "展开" : "收起");
+    btn.title = next ? "展开" : "收起";
+  }
+  save();
+  saveCollapsedPersons();
+}
 function renderEditor(){
   const list = document.getElementById("personList");
+  const alive = new Set(state.persons.map(p=>p.id));
+  collapsedPersons.forEach(id=>{ if(!alive.has(id)) collapsedPersons.delete(id); });
   list.innerHTML = "";
   state.persons.forEach((p, i) => {
     const item = document.createElement("div");
     item.className = "person-item";
     item.dataset.id = p.id;
+    const collapsed = collapsedPersons.has(p.id);
+    if(collapsed) item.classList.add("collapsed");
     item.innerHTML = `
       <div class="pi-head">
         <span class="idx">${i+1}</span>
@@ -701,10 +742,11 @@ function renderEditor(){
         <span class="pi-actions">
           <button data-act="up" ${i===0?"disabled":""}>上移</button>
           <button data-act="down" ${i===state.persons.length-1?"disabled":""}>下移</button>
-          <button data-act="copy">复制</button>
           <button data-act="del">删除</button>
         </span>
+        <button class="pi-caret" data-act="toggle" aria-expanded="${collapsed ? "false" : "true"}" aria-label="${collapsed ? "展开" : "收起"}" title="${collapsed ? "展开" : "收起"}">${collapsed ? "▸" : "▾"}</button>
       </div>
+      <div class="pi-body">
       <div class="field-row">
         <div class="field"><label>姓名</label><input type="text" data-f="name" aria-label="姓名" value="${esc(p.name)}"></div>
         <div class="field"><label>职务</label><input type="text" data-f="role" aria-label="职务" placeholder="多个职务用顿号分隔" value="${esc(p.role)}"></div>
@@ -734,6 +776,7 @@ function renderEditor(){
       <div class="field">
         <label>简介（多行分段）</label>
         <textarea data-f="bio" aria-label="简介" rows="5">${esc(p.bio)}</textarea>
+      </div>
       </div>`;
     list.appendChild(item);
   });
@@ -753,7 +796,7 @@ function renderEditor(){
       saveSoon(); renderPreviewSoon(); updateStat();
     });
   });
-  // 操作按钮（含缩略图、照片操作、排序复制删除）
+  // 操作按钮（含缩略图、照片操作、排序删除）
   list.querySelectorAll("[data-act]").forEach(el=>{
     el.addEventListener("click", ()=>{
       const id = el.closest(".person-item").dataset.id;
@@ -762,12 +805,12 @@ function renderEditor(){
       if(idx < 0) return;
       if(act==="up" && idx>0){ swap(idx,idx-1); }
       else if(act==="down" && idx<state.persons.length-1){ swap(idx,idx+1); }
-      else if(act==="copy"){ duplicate(idx); }
       else if(act==="del"){
         const p = state.persons[idx];
         if(!confirm(`确定删除「${p && p.name ? p.name : "该人物"}」？`)) return;
         state.persons.splice(idx,1);
       }
+      else if(act==="toggle"){ togglePersonCollapsed(id, el); return; }
       else if(act==="photo"){ pickPhoto(id); return; }
       else if(act==="photoDel"){ const p=state.persons[idx]; p.photo=""; }
       save(); renderEditor(); renderPreview(); updateStat();
@@ -782,13 +825,6 @@ function renderEditor(){
 }
 
 function swap(a,b){ const t=state.persons[a]; state.persons[a]=state.persons[b]; state.persons[b]=t; }
-function duplicate(idx){
-  const src = state.persons[idx];
-  const copy = JSON.parse(JSON.stringify(src));
-  copy.id = uid(); copy.name = src.name + "（副本）";
-  state.persons.splice(idx+1,0,copy);
-}
-
 /* ==================== 照片处理 ==================== */
 let pendingPhotoId = null;
 let pendingPhotoTimer = null;
@@ -964,6 +1000,7 @@ document.getElementById("btnAdd").addEventListener("click", ()=>{
   p.id = uid(); p.bioFont = null;
   state.persons.push(p);
   save(); renderEditor(); renderPreview(); updateStat();
+  setPanelCollapsed("persons", false);
   // 滚动到新增条目，并选中姓名框便于直接改写
   const item = document.querySelector(`.person-item[data-id="${p.id}"]`);
   if(item){
@@ -972,13 +1009,25 @@ document.getElementById("btnAdd").addEventListener("click", ()=>{
     if(nameInput){ nameInput.focus(); nameInput.select(); }
   }
 });
-document.getElementById("btnClear").addEventListener("click", ()=>{
-  if(!confirm("确定清空全部人物、设置与本地历史版本？此操作不可恢复，建议先导出数据备份。")) return;
-  state = normalizeState({ config:{}, persons: [] });
+document.getElementById("btnClearCurrent").addEventListener("click", ()=>{
+  if(!confirm("确定清空当前人物？全局设置与本地历史版本会保留。")) return;
+  state.persons = [];
+  clearPendingPhoto();
+  save(); renderEditor(); renderPreview(); updateStat();
+});
+document.getElementById("btnClearHistory").addEventListener("click", ()=>{
+  if(!confirm("确定清空全部本地历史版本？当前编辑内容不受影响，此操作不可恢复。")) return;
+  store.set(HISTORY_KEY, "[]");
+  store.set(PHOTO_KEY, "{}");
+  renderHistory();
+});
+document.getElementById("btnClearAll").addEventListener("click", ()=>{
+  if(!confirm("确定清空当前人物与全部历史版本？全局设置会保留，此操作不可恢复，建议先导出数据备份。")) return;
+  state.persons = [];
   store.set(HISTORY_KEY, "[]");
   store.set(PHOTO_KEY, "{}");
   clearPendingPhoto();
-  save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat(); renderHistory();
+  save(); renderEditor(); renderPreview(); updateStat(); renderHistory();
 });
 /* ==================== 微信环境检测与引导 ==================== */
 const WX_TIP_KEY = "class_star_wx_tip_v1";
@@ -1063,6 +1112,7 @@ function importFromText(text, source, mode){
     try{ pushHistory("追加导入前自动备份"); }catch(err){}
     incoming.forEach(p=>{ p.id = uid(); state.persons.push(p); });
     save(); renderEditor(); renderPreview(); updateStat();
+    setPanelCollapsed("persons", false);
     return true;
   }
 
@@ -1071,6 +1121,7 @@ function importFromText(text, source, mode){
   try{ pushHistory("导入前自动备份"); }catch(err){}
   state = next;
   save(); syncConfigInputs(); renderEditor(); renderPreview(); updateStat();
+  setPanelCollapsed("persons", false);
   return true;
 }
 
@@ -1459,7 +1510,68 @@ if(savedGuide === "closed") guideOpen = false;
 else if(savedGuide === null && window.innerWidth <= 640) guideOpen = false;
 applyGuide(guideOpen);
 
+/* ==================== 左侧面板折叠 ==================== */
+const PANEL_KEY = "class_star_panels_v1";
+const PANEL_TITLES = { "全局设置":"config", "人物名单":"persons", "本地历史版本":"history" };
+let panelState = {};
+try{ const raw = store.get(PANEL_KEY); if(raw) panelState = JSON.parse(raw) || {}; }catch(e){ panelState = {}; }
+
+function savePanelState(){
+  try{ store.set(PANEL_KEY, JSON.stringify(panelState)); }catch(e){}
+}
+function setPanelCollapsed(key, collapsed, persist){
+  const panel = document.querySelector('.panel[data-panel="' + key + '"]');
+  if(!panel) return;
+  panel.classList.toggle("collapsed", collapsed);
+  const btn = panel.querySelector(".panel-toggle");
+  if(btn){
+    btn.textContent = collapsed ? "展开" : "收起";
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  }
+  if(persist !== false){
+    panelState[key] = collapsed;
+    savePanelState();
+  }
+}
+function setupPanels(){
+  document.querySelectorAll(".editor > .panel").forEach(panel=>{
+    if(panel.classList.contains("privacy")) return;
+    const h2 = panel.querySelector("h2");
+    if(!h2) return;
+    const key = PANEL_TITLES[h2.textContent.trim()];
+    if(!key) return;
+    panel.dataset.panel = key;
+    const head = document.createElement("div");
+    head.className = "panel-head";
+    panel.insertBefore(head, h2);
+    head.appendChild(h2);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "panel-toggle";
+    btn.setAttribute("aria-controls", "panelBody-" + key);
+    btn.addEventListener("click", ()=>{
+      setPanelCollapsed(key, !panel.classList.contains("collapsed"));
+    });
+    head.appendChild(btn);
+    const body = document.createElement("div");
+    body.className = "panel-body";
+    body.id = "panelBody-" + key;
+    while(head.nextSibling){ body.appendChild(head.nextSibling); }
+    panel.appendChild(body);
+    if(key === "persons"){
+      const addBtn = panel.querySelector("#btnAdd");
+      if(addBtn && addBtn.parentElement){
+        const wrap = addBtn.parentElement;
+        wrap.style.marginTop = "0";
+        head.insertBefore(wrap, btn);
+      }
+    }
+    setPanelCollapsed(key, !!panelState[key], false);
+  });
+}
+
 /* ==================== 初始化 ==================== */
+setupPanels();
 loadLayoutWidth();
 renderHistory();
 syncConfigInputs();
